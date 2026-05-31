@@ -14,6 +14,13 @@ const GALLERY_FILE = path.join(__dirname, 'gallery.json');
 const UPLOADS_DIR = path.join(__dirname, 'public', 'uploads');
 
 app.use(express.json({ limit: '25mb' }));
+
+// Serve the all-in-one standalone app as the homepage
+app.get('/', (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.sendFile(path.join(__dirname, 'AI-Media-Studio.html'));
+});
+
 // No-cache for HTML/JS/CSS so changes are always picked up in dev
 app.use(express.static(path.join(__dirname, 'public'), {
   setHeaders(res, filePath) {

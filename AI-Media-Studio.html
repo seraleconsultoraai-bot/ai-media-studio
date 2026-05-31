@@ -895,6 +895,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 // CONFIG — OpenRouter API called directly from browser
 // ============================================================
 const OR_BASE = 'https://openrouter.ai/api/v1';
+// Proxy base: same-origin when served by a server (http/https), localhost when opened as file://
+const PROXY_BASE = location.protocol.startsWith('http') ? '' : 'http://localhost:3000';
 
 const IMAGES_ENDPOINT_MODELS = [
   { id: 'black-forest-labs/flux-schnell:free', name: 'FLUX Schnell', provider: 'Black Forest Labs', free: true,  endpoint: 'images', editing: false },
@@ -1322,12 +1324,12 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 // Resolve a CDN video URL to a locally-playable blob URL.
 // Priority: 1) localhost proxy  2) blob with auth header  3) blob without auth  4) direct URL
 async function resolveVideoUrl(cdnUrl) {
-  // 1. Try localhost:3000 proxy (best option — server fetches with auth server-side)
+  // 1. Try server proxy (same-origin when deployed, localhost when file://). Server fetches with auth.
   try {
-    const proxyUrl = `http://localhost:3000/api/video/proxy?url=${encodeURIComponent(cdnUrl)}`;
+    const proxyUrl = `${PROXY_BASE}/api/video/proxy?url=${encodeURIComponent(cdnUrl)}`;
     const test = await fetch(proxyUrl, { signal: AbortSignal.timeout(4000) });
     if (test.ok) {
-      console.log('[video] using localhost proxy ✓');
+      console.log('[video] using server proxy ✓');
       return proxyUrl;
     }
   } catch { /* server not running */ }
@@ -1636,36 +1638,34 @@ function downloadResult() {
   downloadUrl(state.currentResult.url, `ai_${resultType}_${Date.now()}`, isVideo);
 }
 
+const isProxyUrl = u => u.includes('/api/video/proxy');
+const withDownloadFlag = u => u.includes('?') ? `${u}&download=1` : `${u}?download=1`;
+
 async function downloadUrl(url, name, isVideo = false) {
   const ext = isVideo ? 'mp4' : 'jpg';
 
-  // blob://, data:, or /path — same-origin, a.download works perfectly
+  // Our proxy (relative or localhost) — add download flag so server sets Content-Disposition
+  if (isProxyUrl(url)) {
+    triggerAnchorDownload(withDownloadFlag(url), `${name}.${ext}`);
+    return;
+  }
+
+  // blob://, data:, or local /uploads path — same-origin, a.download works perfectly
   if (url.startsWith('blob:') || url.startsWith('data:') || url.startsWith('/')) {
     triggerAnchorDownload(url, `${name}.${ext}`);
     return;
   }
 
-  // localhost proxy URL — same-origin, a.download works
-  if (url.startsWith('http://localhost')) {
-    const dlUrl = url.includes('?') ? `${url}&download=1` : `${url}?download=1`;
-    triggerAnchorDownload(dlUrl, `${name}.${ext}`);
-    return;
-  }
-
   // External CDN URL — a.download is ignored by browsers for cross-origin URLs.
-  // Try to get a local URL first, then download.
+  // Resolve through the server proxy / blob first, then download.
   if (isVideo) {
     showToast('Preparando descarga...', 'success');
     const localUrl = await resolveVideoUrl(url);
     if (localUrl !== url) {
-      // Got a local blob or proxy URL — real download works
-      const dlUrl = localUrl.startsWith('http://localhost')
-        ? (localUrl.includes('?') ? `${localUrl}&download=1` : `${localUrl}?download=1`)
-        : localUrl;
+      const dlUrl = isProxyUrl(localUrl) ? withDownloadFlag(localUrl) : localUrl;
       triggerAnchorDownload(dlUrl, `${name}.${ext}`);
       return;
     }
-    // Still a CDN URL — open in new tab, can right-click save
     window.open(url, '_blank');
     showToast('Vídeo abierto en nueva pestaña → clic derecho → "Guardar vídeo como"', 'warning');
     return;
@@ -1762,7 +1762,7 @@ function setupEventListeners() {
     if (!originalUrl) return;
     // If we already have a blob/proxy URL, use that for download instead of CDN
     const currentUrl = state.currentResult?.url;
-    if (currentUrl && (currentUrl.startsWith('blob:') || currentUrl.startsWith('http://localhost'))) {
+    if (currentUrl && (currentUrl.startsWith('blob:') || isProxyUrl(currentUrl))) {
       await downloadUrl(currentUrl, `video_${Date.now()}`, true);
     } else {
       // Try to resolve (with auth) before falling back to direct open
