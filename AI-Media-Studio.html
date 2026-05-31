@@ -31,8 +31,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 .api-status{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-secondary);background:var(--bg-surface);padding:5px 12px;border-radius:20px;border:1px solid var(--border)}
 .status-dot{width:7px;height:7px;border-radius:50%;background:var(--error);transition:all 0.3s}
 .status-dot.connected{background:var(--success);box-shadow:0 0 8px var(--success)}
-.credit-status{cursor:pointer;margin-right:8px}
-.credit-status:hover{border-color:var(--accent)}
+.credit-divider{display:inline-flex;align-items:center;gap:5px;cursor:pointer}
+.credit-sep{color:var(--border);margin:0 1px}
 .credit-text{font-weight:600;color:var(--text-primary)}
 .credit-text.low{color:var(--error)}
 .main{margin-top:var(--header-height);height:calc(100vh - var(--header-height));overflow:hidden}
@@ -308,13 +308,14 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
     <button class="nav-tab" data-tab="settings">Config</button>
   </nav>
   <div class="header-right">
-    <div class="api-status credit-status hidden" id="creditStatus" title="Saldo de OpenRouter (clic para actualizar)">
-      <span>💳</span>
-      <span class="credit-text" id="creditText">—</span>
-    </div>
     <div class="api-status" id="apiStatus">
       <span class="status-dot"></span>
       <span class="status-text">Sin API Key</span>
+      <span class="credit-divider hidden" id="creditStatus" title="Saldo de OpenRouter (clic para actualizar)">
+        <span class="credit-sep">·</span>
+        <span>💳</span>
+        <span class="credit-text" id="creditText">—</span>
+      </span>
     </div>
   </div>
 </header>
