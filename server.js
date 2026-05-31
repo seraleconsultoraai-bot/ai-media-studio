@@ -15,6 +15,27 @@ const UPLOADS_DIR = path.join(__dirname, 'public', 'uploads');
 
 app.use(express.json({ limit: '25mb' }));
 
+// ── Acceso restringido (HTTP Basic Auth) ───────────────────────────
+// Define en EasyPanel la variable APP_USERS con pares usuario:contraseña
+// separados por coma. Ej:  sergi:miClave123,socio:otraClave456
+// Si APP_USERS no está definida, la app queda abierta (útil en local).
+const APP_USERS = (process.env.APP_USERS || '')
+  .split(',').map(s => s.trim()).filter(Boolean);
+
+if (APP_USERS.length > 0) {
+  app.use((req, res, next) => {
+    const hdr = req.headers.authorization || '';
+    const [scheme, encoded] = hdr.split(' ');
+    if (scheme === 'Basic' && encoded) {
+      const decoded = Buffer.from(encoded, 'base64').toString('utf8'); // "user:pass"
+      if (APP_USERS.includes(decoded)) return next();
+    }
+    res.setHeader('WWW-Authenticate', 'Basic realm="AI Media Studio"');
+    return res.status(401).send('Acceso restringido — credenciales requeridas');
+  });
+  console.log(`[auth] Acceso protegido para ${APP_USERS.length} usuario(s)`);
+}
+
 // Serve the all-in-one standalone app as the homepage
 app.get('/', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
