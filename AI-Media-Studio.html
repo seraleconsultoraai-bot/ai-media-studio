@@ -31,6 +31,10 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 .api-status{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-secondary);background:var(--bg-surface);padding:5px 12px;border-radius:20px;border:1px solid var(--border)}
 .status-dot{width:7px;height:7px;border-radius:50%;background:var(--error);transition:all 0.3s}
 .status-dot.connected{background:var(--success);box-shadow:0 0 8px var(--success)}
+.credit-status{cursor:pointer;margin-right:8px}
+.credit-status:hover{border-color:var(--accent)}
+.credit-text{font-weight:600;color:var(--text-primary)}
+.credit-text.low{color:var(--error)}
 .main{margin-top:var(--header-height);height:calc(100vh - var(--header-height));overflow:hidden}
 .tab-content{height:100%}.tab-content.hidden{display:none}
 .workspace{display:flex;height:100%}
@@ -304,6 +308,10 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
     <button class="nav-tab" data-tab="settings">Config</button>
   </nav>
   <div class="header-right">
+    <div class="api-status credit-status hidden" id="creditStatus" title="Saldo de OpenRouter (clic para actualizar)">
+      <span>💳</span>
+      <span class="credit-text" id="creditText">—</span>
+    </div>
     <div class="api-status" id="apiStatus">
       <span class="status-dot"></span>
       <span class="status-text">Sin API Key</span>
@@ -1316,6 +1324,7 @@ async function generate() {
     document.getElementById('loadingOverlay').classList.add('hidden');
     state.generating = false;
     document.getElementById('generateBtn').disabled = false;
+    loadCredits(); // refrescar saldo tras generar
   }
 }
 
@@ -1553,6 +1562,7 @@ async function saveApiKey() {
   const total = (state.models.image?.length||0) + (state.models.video?.length||0);
   info.textContent = `✓ API key guardada · ${total} modelos cargados`;
   info.className = 'api-key-info success';
+  loadCredits();
 }
 
 function updateApiStatus() {
@@ -1560,6 +1570,32 @@ function updateApiStatus() {
   const text = document.querySelector('.status-text');
   if (state.apiKey) { dot.classList.add('connected'); text.textContent = 'Conectado'; }
   else { dot.classList.remove('connected'); text.textContent = 'Sin API Key'; }
+}
+
+// Consulta el saldo de OpenRouter y lo muestra en la cabecera
+async function loadCredits() {
+  const box = document.getElementById('creditStatus');
+  const txt = document.getElementById('creditText');
+  if (!state.apiKey) { box.classList.add('hidden'); return; }
+  box.classList.remove('hidden');
+  txt.textContent = '...';
+  try {
+    const r = await fetch(`${OR_BASE}/credits`, {
+      headers: { 'Authorization': `Bearer ${state.apiKey}` },
+      signal: AbortSignal.timeout(15000),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error?.message || `HTTP ${r.status}`);
+    const total = data.data?.total_credits ?? 0;
+    const used  = data.data?.total_usage   ?? 0;
+    const left  = total - used;
+    txt.textContent = `$${left.toFixed(2)}`;
+    txt.classList.toggle('low', left < 1);
+    box.title = `Saldo: $${left.toFixed(2)} (usado $${used.toFixed(2)} de $${total.toFixed(2)}) · clic para actualizar`;
+  } catch (e) {
+    txt.textContent = 'n/d';
+    box.title = `No se pudo leer el saldo: ${e.message}`;
+  }
 }
 
 // ============================================================
@@ -2468,7 +2504,8 @@ function applyMotionTemplate(id) {
 async function init() {
   setupEventListeners();
   updateApiStatus();
-  if (state.apiKey) document.getElementById('apiKeyInput').value = state.apiKey;
+  if (state.apiKey) { document.getElementById('apiKeyInput').value = state.apiKey; loadCredits(); }
+  document.getElementById('creditStatus').addEventListener('click', loadCredits);
   loadGalleryFromStorage();
   loadClientsFromStorage(); renderClientSelect();
   loadCalendarFromStorage();
