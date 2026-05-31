@@ -1,9 +1,9 @@
 # AI Media Studio — Node + ffmpeg (para el futuro editor de vídeo)
 FROM node:20-slim
 
-# ffmpeg para edición/concatenación de vídeo (Fase B del editor)
+# ffmpeg para edición/concatenación + fuente para texto sobre vídeo (drawtext)
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ffmpeg \
+    && apt-get install -y --no-install-recommends ffmpeg fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

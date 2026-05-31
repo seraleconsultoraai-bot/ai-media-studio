@@ -3,6 +3,8 @@ const axios = require('axios');
 const fs = require('fs').promises;
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
+const { execFile } = require('child_process');
+const multer = require('multer');
 require('dotenv').config();
 
 const app = express();
@@ -55,6 +57,7 @@ app.use(express.static(path.join(__dirname, 'public'), {
 async function initDirs() {
   await fs.mkdir(path.join(UPLOADS_DIR, 'images'), { recursive: true });
   await fs.mkdir(path.join(UPLOADS_DIR, 'videos'), { recursive: true });
+  await fs.mkdir(path.join(UPLOADS_DIR, 'editor'), { recursive: true });
   try {
     await fs.access(GALLERY_FILE);
   } catch {
@@ -666,6 +669,181 @@ async function downloadAndSave(imageUrl, subdir) {
     return { localPath: null, finalUrl: imageUrl };
   }
 }
+
+// ============================================================
+// VIDEO EDITOR (ffmpeg) — Fase B
+// ============================================================
+const EDITOR_DIR = path.join(UPLOADS_DIR, 'editor');
+const FONT = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf';
+const DIMS = { '16:9':[1280,720], '9:16':[720,1280], '1:1':[1080,1080], '4:3':[960,720] };
+
+// Multer para subir clips/audio
+const editorUpload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => cb(null, EDITOR_DIR),
+    filename: (req, file, cb) => {
+      const ext = (path.extname(file.originalname) || '.bin').toLowerCase();
+      cb(null, `${uuidv4()}${ext}`);
+    },
+  }),
+  limits: { fileSize: 200 * 1024 * 1024 }, // 200 MB por archivo
+});
+
+// Ejecuta ffmpeg/ffprobe y devuelve promesa
+function run(bin, args) {
+  return new Promise((resolve, reject) => {
+    execFile(bin, args, { maxBuffer: 1024 * 1024 * 64 }, (err, stdout, stderr) => {
+      if (err) { err.stderr = stderr; return reject(err); }
+      resolve({ stdout, stderr });
+    });
+  });
+}
+
+// ¿El archivo tiene pista de audio?
+async function hasAudio(file) {
+  try {
+    const { stdout } = await run('ffprobe', ['-v','error','-select_streams','a','-show_entries','stream=index','-of','csv=p=0', file]);
+    return stdout.trim().length > 0;
+  } catch { return false; }
+}
+
+// Resuelve un src (ruta local /uploads, data: o URL) a un archivo físico
+async function resolveToFile(src) {
+  if (!src) throw new Error('clip sin src');
+  if (src.startsWith('/uploads/')) {
+    return path.join(__dirname, 'public', src);
+  }
+  if (src.startsWith('data:')) {
+    const m = src.match(/^data:(.+?);base64,(.*)$/);
+    const ext = (m?.[1] || '').includes('mp4') ? '.mp4' : '.bin';
+    const f = path.join(EDITOR_DIR, `${uuidv4()}${ext}`);
+    await fs.writeFile(f, Buffer.from(m[2], 'base64'));
+    return f;
+  }
+  // URL remota
+  const r = await axios.get(src, { responseType: 'arraybuffer', timeout: 120000 });
+  const f = path.join(EDITOR_DIR, `${uuidv4()}.mp4`);
+  await fs.writeFile(f, r.data);
+  return f;
+}
+
+// Escapa texto para drawtext
+function escDraw(t) {
+  return String(t).replace(/\\/g,'\\\\').replace(/:/g,'\\:').replace(/'/g,"\\\\'").replace(/%/g,'\\%');
+}
+function textPos(position, W, H) {
+  if (position === 'top')    return 'x=(w-tw)/2:y=60';
+  if (position === 'bottom') return 'x=(w-tw)/2:y=h-th-60';
+  return 'x=(w-tw)/2:y=(h-th)/2'; // center
+}
+function wmPos(position) {
+  if (position === 'tl') return '20:20';
+  if (position === 'bl') return '20:main_h-overlay_h-20';
+  if (position === 'br') return 'main_w-overlay_w-20:main_h-overlay_h-20';
+  return 'main_w-overlay_w-20:20'; // tr por defecto
+}
+
+// Subir archivo (clip o audio) al área del editor
+app.post('/api/editor/upload', editorUpload.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No se recibió archivo' });
+  res.json({ path: `/uploads/editor/${req.file.filename}`, name: req.file.originalname });
+});
+
+// Renderizar el proyecto del editor
+app.post('/api/editor/render', async (req, res) => {
+  const { clips = [], audio = null, texts = [], watermark = null, aspect = '16:9' } = req.body || {};
+  if (!clips.length) return res.status(400).json({ error: 'No hay clips para editar' });
+
+  const [W, H] = DIMS[aspect] || DIMS['16:9'];
+  const job = uuidv4().slice(0, 8);
+  const tmp = [];
+  const tmpFile = (suffix) => { const f = path.join(EDITOR_DIR, `_${job}_${suffix}`); tmp.push(f); return f; };
+
+  try {
+    // 1) Normalizar + recortar cada clip a parámetros comunes (con audio garantizado)
+    const normalized = [];
+    for (let i = 0; i < clips.length; i++) {
+      const c = clips[i];
+      const input = await resolveToFile(c.src);
+      const out = tmpFile(`n${i}.mp4`);
+      const start = Number(c.start) || 0;
+      const end = Number(c.end) || 0;
+      const dur = end > start ? (end - start) : 0;
+      const audioPresent = await hasAudio(input);
+
+      const args = ['-y'];
+      if (start > 0) args.push('-ss', String(start));
+      args.push('-i', input);
+      if (!audioPresent) args.push('-f','lavfi','-i','anullsrc=channel_layout=stereo:sample_rate=44100');
+      if (dur > 0) args.push('-t', String(dur));
+      args.push('-vf', `scale=${W}:${H}:force_original_aspect_ratio=decrease,pad=${W}:${H}:(ow-iw)/2:(oh-ih)/2:black,setsar=1,fps=30`);
+      args.push('-c:v','libx264','-preset','veryfast','-pix_fmt','yuv420p','-c:a','aac','-ar','44100','-ac','2');
+      args.push('-map','0:v:0','-map', audioPresent ? '0:a:0?' : '1:a:0','-shortest', out);
+      await run('ffmpeg', args);
+      normalized.push(out);
+    }
+
+    // 2) Concatenar
+    let current = normalized.length === 1 ? normalized[0] : tmpFile('concat.mp4');
+    if (normalized.length > 1) {
+      const listFile = tmpFile('list.txt');
+      await fs.writeFile(listFile, normalized.map(f => `file '${f.replace(/'/g,"'\\''")}'`).join('\n'));
+      await run('ffmpeg', ['-y','-f','concat','-safe','0','-i', listFile, '-c','copy', current]);
+    }
+
+    // 3) Marca de agua (logo) superpuesta
+    if (watermark && watermark.src) {
+      const wmFile = await resolveToFile(watermark.src);
+      const out = tmpFile('wm.mp4');
+      const scale = Number(watermark.scale) || 0.15; // 15% del ancho
+      await run('ffmpeg', ['-y','-i', current, '-i', wmFile,
+        '-filter_complex', `[1:v]scale=${Math.round(W*scale)}:-1[wm];[0:v][wm]overlay=${wmPos(watermark.position)}`,
+        '-c:a','copy', out]);
+      current = out;
+    }
+
+    // 4) Textos (drawtext encadenados)
+    if (texts.length) {
+      const draws = texts.filter(t => t.text && t.text.trim()).map(t => {
+        const size = Number(t.size) || 48;
+        return `drawtext=fontfile=${FONT}:text='${escDraw(t.text)}':${textPos(t.position, W, H)}:fontsize=${size}:fontcolor=white:box=1:boxcolor=black@0.45:boxborderw=14`;
+      });
+      if (draws.length) {
+        const out = tmpFile('txt.mp4');
+        await run('ffmpeg', ['-y','-i', current, '-vf', draws.join(','), '-c:a','copy', out]);
+        current = out;
+      }
+    }
+
+    // 5) Música de fondo (reemplaza el audio)
+    if (audio && audio.src) {
+      const musicFile = await resolveToFile(audio.src);
+      const vol = (audio.volume != null) ? Number(audio.volume) : 1;
+      const out = tmpFile('audio.mp4');
+      await run('ffmpeg', ['-y','-i', current, '-i', musicFile,
+        '-filter_complex', `[1:a]volume=${vol}[a]`,
+        '-map','0:v','-map','[a]','-c:v','copy','-shortest', out]);
+      current = out;
+    }
+
+    // 6) Guardar resultado final en la galería de vídeos
+    const finalName = `edit_${Date.now()}.mp4`;
+    const finalPath = path.join(UPLOADS_DIR, 'videos', finalName);
+    await fs.copyFile(current, finalPath);
+    const url = `/uploads/videos/${finalName}`;
+
+    const item = { id: uuidv4(), type: 'video', prompt: 'Vídeo editado', model: 'editor', url, localPath: url, createdAt: new Date().toISOString() };
+    await addToGallery(item);
+
+    res.json({ url, item });
+  } catch (err) {
+    console.error('[editor] error:', err.message, err.stderr?.slice?.(-500) || '');
+    res.status(500).json({ error: 'Error al renderizar: ' + (err.message || 'desconocido') });
+  } finally {
+    // Limpiar temporales
+    for (const f of tmp) { fs.unlink(f).catch(() => {}); }
+  }
+});
 
 // Start server
 initDirs().then(() => {
