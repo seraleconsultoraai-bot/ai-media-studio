@@ -1,0 +1,2482 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Media Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+:root {
+  --bg-primary: #08080f; --bg-secondary: #0e0e1a; --bg-surface: #141422;
+  --bg-elevated: #1c1c2e; --accent: #7c3aed; --accent-hover: #6d28d9;
+  --accent-light: rgba(124,58,237,0.12); --accent-glow: rgba(124,58,237,0.3);
+  --text-primary: #e8e8f5; --text-secondary: #6b6b90; --text-muted: #3d3d60;
+  --border: rgba(124,58,237,0.15); --border-hover: rgba(124,58,237,0.45);
+  --success: #10b981; --error: #ef4444; --warning: #f59e0b;
+  --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 24px;
+  --shadow: 0 8px 32px rgba(0,0,0,0.6); --shadow-accent: 0 0 40px rgba(124,58,237,0.15);
+  --header-height: 58px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg-primary);color:var(--text-primary);min-height:100vh;overflow:hidden}
+.header{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:var(--header-height);background:var(--bg-secondary);border-bottom:1px solid var(--border);position:fixed;top:0;left:0;right:0;z-index:100}
+.logo{display:flex;align-items:center;gap:8px;text-decoration:none}
+.logo-icon{font-size:18px;color:var(--accent);filter:drop-shadow(0 0 8px var(--accent-glow))}
+.logo-text{font-size:15px;font-weight:700;background:linear-gradient(135deg,#c4b5fd,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.nav-tabs{display:flex;gap:2px;background:var(--bg-surface);padding:3px;border-radius:var(--radius-md);border:1px solid var(--border)}
+.nav-tab{background:none;border:none;color:var(--text-secondary);padding:6px 18px;border-radius:var(--radius-sm);cursor:pointer;font-size:13px;font-weight:500;transition:all 0.2s;font-family:inherit}
+.nav-tab:hover{color:var(--text-primary);background:var(--bg-elevated)}
+.nav-tab.active{background:var(--accent);color:white;box-shadow:0 2px 10px var(--accent-glow)}
+.api-status{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-secondary);background:var(--bg-surface);padding:5px 12px;border-radius:20px;border:1px solid var(--border)}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--error);transition:all 0.3s}
+.status-dot.connected{background:var(--success);box-shadow:0 0 8px var(--success)}
+.main{margin-top:var(--header-height);height:calc(100vh - var(--header-height));overflow:hidden}
+.tab-content{height:100%}.tab-content.hidden{display:none}
+.workspace{display:flex;height:100%}
+.settings-panel{width:260px;min-width:260px;background:var(--bg-secondary);border-right:1px solid var(--border);overflow-y:auto;padding:16px 12px;display:flex;flex-direction:column;gap:8px}
+.settings-panel::-webkit-scrollbar{width:3px}.settings-panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.panel-section{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px}
+.panel-title{font-size:10px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.12em;margin-bottom:10px}
+.type-selector{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.type-btn{background:var(--bg-elevated);border:1px solid transparent;color:var(--text-secondary);padding:8px 4px;border-radius:var(--radius-sm);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:500;transition:all .2s;font-family:inherit}
+.type-btn:hover{color:var(--text-primary);border-color:var(--border-hover)}
+.type-btn.active{background:var(--accent-light);border-color:var(--accent);color:var(--text-primary)}
+.type-icon{font-size:17px}
+.select{width:100%;background:var(--bg-elevated);border:1px solid var(--border);color:var(--text-primary);padding:8px 30px 8px 10px;border-radius:var(--radius-sm);font-size:12px;cursor:pointer;outline:none;transition:border-color .2s;appearance:none;font-family:inherit;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%236b6b90' d='M5 6L0 0h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+.select:focus{border-color:var(--accent)}.select option{background:var(--bg-elevated)}
+.form-group{margin-bottom:10px}.form-group:last-child{margin-bottom:0}
+.label{display:block;font-size:11px;color:var(--text-secondary);margin-bottom:5px;font-weight:500}
+.label-optional{font-weight:400;color:var(--text-muted);font-size:10px}
+.ratio-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.ratio-btn{background:var(--bg-elevated);border:1px solid transparent;color:var(--text-secondary);padding:5px 2px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:500;transition:all .2s;font-family:inherit;text-align:center}
+.ratio-btn:hover{color:var(--text-primary);border-color:var(--border-hover)}
+.ratio-btn.active{background:var(--accent-light);border-color:var(--accent);color:var(--text-primary)}
+.file-upload{display:block;border:1px dashed var(--border);border-radius:var(--radius-sm);padding:10px;text-align:center;font-size:11px;color:var(--text-secondary);cursor:pointer;transition:all .2s;position:relative;overflow:hidden;box-sizing:border-box;width:100%}
+.file-upload:hover{border-color:var(--border-hover);color:var(--text-primary);background:var(--accent-light)}
+.file-upload input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.upload-icon{font-size:18px;display:block;margin-bottom:4px}
+.img-upload-area{position:relative}
+.img-preview-box{position:relative;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border);aspect-ratio:1;background:var(--bg-elevated)}
+.img-preview-thumb{width:100%;height:100%;object-fit:cover;display:block}
+.img-preview-overlay{position:absolute;inset:0;background:rgba(0,0,0,.45);opacity:0;transition:opacity .2s;display:flex;align-items:flex-start;justify-content:flex-end;padding:6px}
+.img-preview-box:hover .img-preview-overlay{opacity:1}
+.img-clear-btn{background:rgba(239,68,68,.85);border:none;color:white;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.img-clear-btn:hover{background:var(--error)}
+.editing-hint{margin-top:6px;font-size:11px;color:var(--text-secondary);background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2);padding:6px 8px;border-radius:var(--radius-sm);line-height:1.4}
+.editing-hint strong{color:var(--accent)}
+.main-area{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.result-area{flex:1;position:relative;overflow-y:auto;display:flex;align-items:flex-start;justify-content:center;background:radial-gradient(ellipse at center,rgba(124,58,237,.04) 0%,transparent 70%)}
+.result-placeholder{display:flex;align-items:center;justify-content:center;width:100%;height:100%}
+.placeholder-content{text-align:center;color:var(--text-muted)}
+.placeholder-icon{font-size:52px;color:var(--accent);opacity:.2;animation:pulse-glow 3s ease-in-out infinite;display:block;margin-bottom:14px}
+@keyframes pulse-glow{0%,100%{opacity:.2;transform:scale(1)}50%{opacity:.4;transform:scale(1.05)}}
+.placeholder-content p{font-size:14px;margin-bottom:6px;color:var(--text-secondary)}
+.placeholder-sub{font-size:12px!important;color:var(--text-muted)!important}
+.result-content{width:100%;min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:14px}
+.result-content.hidden{display:none}
+.result-image{max-width:100%;max-height:65vh;border-radius:var(--radius-lg);box-shadow:var(--shadow),var(--shadow-accent);object-fit:contain;animation:fadeIn .4s ease}
+.result-image.hidden{display:none}
+.result-video{max-width:100%;max-height:65vh;border-radius:var(--radius-lg);box-shadow:var(--shadow);animation:fadeIn .4s ease}
+.result-video.hidden{display:none}
+@keyframes fadeIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+.result-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.loading-overlay{position:absolute;inset:0;background:rgba(8,8,15,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;backdrop-filter:blur(6px);z-index:10}
+.loading-overlay.hidden{display:none}
+.loader{width:56px;height:56px;position:relative}
+.loader-ring{width:100%;height:100%;border:3px solid transparent;border-top-color:var(--accent);border-radius:50%;animation:spin .9s linear infinite;box-shadow:0 0 20px var(--accent-glow)}
+.loader-ring::before{content:'';position:absolute;inset:7px;border:2px solid transparent;border-top-color:rgba(124,58,237,.35);border-radius:50%;animation:spin 1.4s linear infinite reverse}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:15px;font-weight:500;color:var(--text-primary)}
+.loading-sub{font-size:12px;color:var(--text-secondary)}
+.prompt-area{background:var(--bg-secondary);border-top:1px solid var(--border);padding:14px 20px;flex-shrink:0}
+.prompt-container{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:8px}
+.prompt-input-wrapper{position:relative}
+.prompt-input{width:100%;background:var(--bg-surface);border:1px solid var(--border);color:var(--text-primary);padding:11px 42px 11px 14px;border-radius:var(--radius-md);font-size:13px;font-family:inherit;resize:none;outline:none;transition:border-color .2s,box-shadow .2s;line-height:1.55}
+.prompt-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light)}
+.prompt-input::placeholder{color:var(--text-muted)}
+.negative-prompt{margin-top:6px;background:rgba(239,68,68,.04);border-color:rgba(239,68,68,.18)}
+.negative-prompt:focus{border-color:rgba(239,68,68,.5);box-shadow:0 0 0 3px rgba(239,68,68,.08)}
+.prompt-tools{position:absolute;right:10px;top:10px}
+.prompt-tool-btn{background:none;border:none;color:var(--text-muted);cursor:pointer;padding:4px;border-radius:4px;font-size:13px;transition:color .2s;line-height:1}
+.prompt-tool-btn:hover{color:var(--text-secondary)}
+.toggle-btn{background:none;border:none;color:var(--text-secondary);font-size:11px;cursor:pointer;font-family:inherit;transition:color .2s;padding:0}
+.toggle-btn:hover{color:var(--text-primary)}
+.prompt-footer{display:flex;align-items:center;justify-content:space-between}
+.char-count{font-size:11px;color:var(--text-muted)}
+.btn{border:none;padding:8px 16px;border-radius:var(--radius-sm);cursor:pointer;font-size:13px;font-weight:500;transition:all .2s;display:inline-flex;align-items:center;gap:6px;font-family:inherit;white-space:nowrap}
+.btn-primary{background:var(--accent);color:white}
+.btn-primary:hover:not(:disabled){background:var(--accent-hover);transform:translateY(-1px);box-shadow:0 4px 16px var(--accent-glow)}
+.btn-primary:active:not(:disabled){transform:translateY(0)}
+.btn-secondary{background:var(--bg-elevated);color:var(--text-primary);border:1px solid var(--border)}
+.btn-secondary:hover:not(:disabled){border-color:var(--border-hover);background:var(--bg-surface)}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.generate-btn{padding:9px 22px;font-size:14px}
+.gallery-container{height:100%;overflow-y:auto;padding:24px;background:var(--bg-primary)}
+.gallery-container::-webkit-scrollbar{width:4px}.gallery-container::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.gallery-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.gallery-title{font-size:20px;font-weight:700}
+.gallery-filters{display:flex;gap:3px;background:var(--bg-surface);padding:3px;border-radius:var(--radius-md);border:1px solid var(--border)}
+.filter-btn{background:none;border:none;color:var(--text-secondary);padding:5px 14px;border-radius:var(--radius-sm);cursor:pointer;font-size:12px;font-weight:500;transition:all .2s;font-family:inherit}
+.filter-btn:hover{color:var(--text-primary)}.filter-btn.active{background:var(--accent);color:white}
+.gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.gallery-empty{grid-column:1/-1;text-align:center;padding:80px 20px;color:var(--text-muted)}
+.empty-icon{font-size:48px;margin-bottom:16px;opacity:.3}.gallery-empty p{margin-bottom:6px;font-size:14px}
+.gallery-item{background:var(--bg-surface);border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--border);cursor:pointer;transition:all .22s;position:relative}
+.gallery-item:hover{border-color:var(--border-hover);transform:translateY(-3px);box-shadow:var(--shadow-accent),0 6px 20px rgba(0,0,0,.4)}
+.gallery-item-thumb{width:100%;aspect-ratio:1;object-fit:cover;display:block}
+.gallery-item-video{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
+.gallery-item-info{padding:9px 10px}
+.gallery-item-prompt{font-size:11px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gallery-item-meta{font-size:10px;color:var(--text-muted);margin-top:3px}
+.gallery-type-badge{position:absolute;top:7px;left:7px;background:rgba(0,0,0,.65);color:white;font-size:10px;padding:2px 7px;border-radius:10px;backdrop-filter:blur(4px)}
+.gallery-item-actions{position:absolute;top:7px;right:7px;display:flex;gap:4px;opacity:0;transition:opacity .2s}
+.gallery-item:hover .gallery-item-actions{opacity:1}
+.gallery-action-btn{background:rgba(0,0,0,.72);border:none;color:white;padding:4px 7px;border-radius:6px;cursor:pointer;font-size:11px;backdrop-filter:blur(4px);transition:background .2s}
+.gallery-action-btn:hover{background:rgba(0,0,0,.9)}
+.settings-container{max-width:580px;margin:36px auto;padding:0 24px;overflow-y:auto;height:calc(100% - 36px)}
+.settings-title{font-size:20px;font-weight:700;margin-bottom:20px}
+.settings-card{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;margin-bottom:14px}
+.settings-card h3{font-size:14px;font-weight:600;margin-bottom:8px}
+.settings-desc{font-size:13px;color:var(--text-secondary);margin-bottom:14px;line-height:1.6}
+.input-group{display:flex;gap:7px}
+.input{flex:1;background:var(--bg-elevated);border:1px solid var(--border);color:var(--text-primary);padding:8px 12px;border-radius:var(--radius-sm);font-size:13px;outline:none;transition:border-color .2s;font-family:monospace;letter-spacing:.02em}
+.input:focus{border-color:var(--accent)}
+.api-key-info{margin-top:8px;font-size:12px;min-height:18px;color:var(--text-secondary)}
+.api-key-info.success{color:var(--success)}.api-key-info.error{color:var(--error)}
+.settings-steps{list-style:none;counter-reset:steps;padding:0}
+.settings-steps li{counter-increment:steps;padding:8px 0 8px 32px;position:relative;font-size:13px;color:var(--text-secondary);border-bottom:1px solid var(--border);line-height:1.5}
+.settings-steps li:last-child{border-bottom:none}
+.settings-steps li::before{content:counter(steps);position:absolute;left:0;top:8px;width:20px;height:20px;background:var(--accent-light);border:1px solid var(--accent);color:var(--accent);font-size:10px;font-weight:700;border-radius:50%;display:flex;align-items:center;justify-content:center;line-height:1}
+.settings-steps code{background:var(--bg-elevated);border:1px solid var(--border);padding:1px 6px;border-radius:4px;font-size:11px;font-family:monospace;color:var(--accent)}
+.settings-note{margin-top:12px;font-size:12px;color:var(--text-secondary);background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);padding:8px 12px;border-radius:var(--radius-sm)}
+.model-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.model-info-item{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px}
+.model-info-item .model-name{font-size:11px;font-weight:600;color:var(--text-primary);margin-bottom:2px}
+.model-info-item .model-provider{font-size:10px;color:var(--text-secondary)}
+.model-badge{display:inline-block;font-size:9px;padding:1px 5px;border-radius:4px;margin-left:4px;font-weight:600}
+.model-badge.free{background:rgba(16,185,129,.15);color:var(--success);border:1px solid rgba(16,185,129,.3)}
+.model-badge.edit{background:rgba(124,58,237,.15);color:var(--accent);border:1px solid rgba(124,58,237,.3)}
+.model-summary{grid-column:1/-1;display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text-secondary);padding:8px 10px;background:var(--bg-elevated);border-radius:var(--radius-sm);border:1px solid var(--border);margin-bottom:4px}
+.modal{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal.hidden{display:none}
+.modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.88);backdrop-filter:blur(6px)}
+.modal-content{position:relative;max-width:min(90vw,900px);max-height:90vh;background:var(--bg-surface);border-radius:var(--radius-xl);overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow),var(--shadow-accent);display:flex;flex-direction:column;animation:modalIn .25s ease}
+@keyframes modalIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+.modal-close{position:absolute;top:12px;right:12px;background:rgba(0,0,0,.65);border:none;color:white;padding:5px 9px;border-radius:var(--radius-sm);cursor:pointer;font-size:13px;z-index:1;backdrop-filter:blur(4px);transition:background .2s}
+.modal-close:hover{background:rgba(0,0,0,.85)}
+.modal-image{max-width:100%;max-height:65vh;display:block;object-fit:contain}
+.modal-image.hidden{display:none}
+.modal-video{width:100%;max-height:65vh}.modal-video.hidden{display:none}
+.modal-info{padding:14px 16px;background:var(--bg-surface);flex-shrink:0}
+.modal-prompt{font-size:13px;color:var(--text-secondary);margin-bottom:5px;line-height:1.5}
+.modal-meta{font-size:11px;color:var(--text-muted);margin-bottom:10px}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--bg-elevated);border:1px solid var(--border);color:var(--text-primary);padding:11px 16px;border-radius:var(--radius-md);font-size:13px;box-shadow:var(--shadow);z-index:2000;animation:toastIn .3s ease;max-width:320px}
+.toast.success{border-color:rgba(16,185,129,.4)}.toast.error{border-color:rgba(239,68,68,.4)}.toast.warning{border-color:rgba(245,158,11,.4)}
+@keyframes toastIn{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
+.hidden{display:none!important}
+.modal-actions{display:flex;gap:6px}
+@media(max-width:700px){.settings-panel{display:none}.logo-text{display:none}.prompt-area{padding:10px 12px}.gallery-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}.model-info-grid{grid-template-columns:1fr}}
+/* ── Video mode selector ── */
+.vid-mode-selector{display:flex;gap:4px}
+.vid-mode-btn{flex:1;background:var(--bg-surface);border:1px solid var(--border);color:var(--text-secondary);padding:8px 6px;border-radius:var(--radius-sm);cursor:pointer;font-size:11px;font-weight:500;transition:all .2s;font-family:inherit}
+.vid-mode-btn.active{background:var(--accent-light);border-color:var(--accent);color:var(--text-primary)}
+.vid-mode-btn:hover{border-color:var(--border-hover)}
+/* ── Mockup templates ── */
+.mockup-hint{font-size:10px;color:var(--text-muted);margin-top:5px;line-height:1.5}
+.mockup-hint.active{color:var(--accent)}
+/* ── Toggle switch ── */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.toggle-group{display:flex;align-items:center;gap:8px}
+.toggle-label{font-size:12px;color:var(--text-secondary)}
+.toggle-switch{position:relative;display:inline-block;width:36px;height:20px;flex-shrink:0}
+.toggle-switch input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:var(--border);transition:.25s;border-radius:20px}
+.toggle-slider:before{position:absolute;content:"";height:14px;width:14px;left:3px;bottom:3px;background:white;transition:.25s;border-radius:50%}
+.toggle-switch input:checked+.toggle-slider{background:var(--accent)}
+.toggle-switch input:checked+.toggle-slider:before{transform:translateX(16px)}
+/* ── System prompt card ── */
+.optimizer-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px}
+.optimizer-actions{display:flex;gap:6px;align-items:center}
+.optimizer-preview{margin-top:10px;padding:10px 12px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:11px;color:var(--text-secondary);line-height:1.6;white-space:pre-wrap;max-height:80px;overflow-y:auto}
+.optimizer-model-row{display:flex;align-items:center;gap:8px;margin-top:8px}
+/* ── Multi-image reference grid ── */
+.ref-images-grid{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.ref-thumb-wrap{position:relative;width:54px;height:54px;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border);flex-shrink:0}
+.ref-thumb-wrap img{width:100%;height:100%;object-fit:cover;display:block}
+.ref-thumb-remove{position:absolute;top:2px;right:2px;width:16px;height:16px;background:rgba(239,68,68,.88);border:none;color:white;cursor:pointer;border-radius:3px;font-size:9px;display:flex;align-items:center;justify-content:center;padding:0;opacity:0;transition:opacity .15s}
+.ref-thumb-wrap:hover .ref-thumb-remove{opacity:1}
+.ref-add-btn{width:54px;height:54px;border:1px dashed var(--border);border-radius:var(--radius-sm);background:none;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:22px;transition:all .2s;flex-shrink:0}
+.ref-add-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+.file-upload.compact{padding:6px 10px;font-size:11px;display:flex;align-items:center;gap:6px;text-align:left}
+.file-upload.compact .upload-icon{font-size:14px;margin:0}
+/* ── Logo upload in client modal ── */
+.logo-upload-row{display:flex;gap:12px;align-items:flex-start;margin-bottom:4px}
+.logo-preview-box{width:72px;height:72px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-elevated);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:22px;cursor:pointer;transition:border-color .2s;position:relative}
+.logo-preview-box:hover{border-color:var(--accent)}
+.logo-preview-box img{width:100%;height:100%;object-fit:contain}
+.logo-upload-right{flex:1;display:flex;flex-direction:column;gap:6px}
+.logo-upload-btn{font-size:11px;color:var(--accent);background:none;border:1px dashed var(--accent);padding:5px 10px;border-radius:var(--radius-sm);cursor:pointer;transition:all .2s;text-align:center;font-family:inherit}
+.logo-upload-btn:hover{background:var(--accent-light)}
+.color-swatches{display:flex;gap:5px;flex-wrap:wrap;align-items:center;min-height:20px}
+.color-swatch{width:20px;height:20px;border-radius:4px;border:1px solid rgba(255,255,255,.15);cursor:pointer;transition:transform .15s;flex-shrink:0;title:attr(data-hex)}
+.color-swatch:hover{transform:scale(1.2)}
+.color-swatch-label{font-size:10px;color:var(--text-muted)}
+.color-palette-hint{font-size:10px;color:var(--text-muted);margin-top:2px}
+/* ── Color swatches in client card ── */
+.client-card-colors{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}
+.client-card-color{width:14px;height:14px;border-radius:3px;border:1px solid rgba(255,255,255,.1)}
+.client-card-logo{width:32px;height:32px;object-fit:contain;border-radius:4px;position:absolute;top:10px;right:44px;background:var(--bg-elevated);padding:2px;border:1px solid var(--border)}
+/* ── Client selector ── */
+.client-active-info{margin-top:6px;font-size:11px;color:var(--text-secondary);background:var(--accent-light);border:1px solid var(--accent);padding:6px 8px;border-radius:var(--radius-sm)}
+.client-tone-preview{color:var(--text-secondary);font-size:11px;font-style:italic}
+/* ── Caption panel ── */
+.caption-panel{background:var(--bg-secondary);border-top:1px solid var(--border);padding:12px 16px;flex-shrink:0;overflow:hidden;display:flex;flex-direction:column;gap:8px}
+.caption-panel-header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.caption-tabs{display:flex;gap:2px;background:var(--bg-surface);padding:3px;border-radius:var(--radius-md);border:1px solid var(--border)}
+.caption-tab{background:none;border:none;color:var(--text-secondary);padding:5px 10px;border-radius:var(--radius-sm);cursor:pointer;font-size:11px;font-weight:500;transition:all .2s;font-family:inherit}
+.caption-tab.active{background:var(--accent);color:white}
+.caption-header-actions{display:flex;align-items:center;gap:6px}
+.caption-close-btn{background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:14px;padding:4px;transition:color .2s}
+.caption-close-btn:hover{color:var(--text-primary)}
+.caption-pane{display:flex;flex-direction:column;gap:6px}
+.caption-counter{font-size:10px;color:var(--text-muted);text-align:right;line-height:1}
+.caption-counter.over-limit{color:var(--error)}
+.caption-textarea{width:100%;background:var(--bg-surface);border:1px solid var(--border);color:var(--text-primary);padding:8px 10px;border-radius:var(--radius-sm);font-size:12px;font-family:inherit;resize:vertical;outline:none;min-height:72px;transition:border-color .2s;box-sizing:border-box}
+.caption-textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light)}
+.caption-footer{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.caption-hashtags{font-size:11px;color:var(--accent);line-height:1.6;flex:1;word-break:break-word}
+.caption-generating{display:flex;align-items:center;gap:8px;color:var(--text-secondary);font-size:12px;margin-top:4px}
+/* ── Clients tab ── */
+.clients-container{max-width:860px;margin:0 auto;padding:24px;height:100%;overflow-y:auto}
+.clients-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.clients-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.clients-empty{grid-column:1/-1;text-align:center;padding:80px 20px;color:var(--text-muted)}
+.client-card{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px 16px;cursor:pointer;transition:all .22s;position:relative}
+.client-card:hover{border-color:var(--border-hover);transform:translateY(-2px);box-shadow:var(--shadow-accent)}
+.client-card-name{font-size:14px;font-weight:600;margin-bottom:4px}
+.client-card-tone{font-size:12px;color:var(--text-secondary);margin-bottom:8px}
+.client-card-hashtags{font-size:11px;color:var(--accent)}
+.client-card-actions{position:absolute;top:10px;right:10px;display:flex;gap:4px;opacity:0;transition:opacity .2s}
+.client-card:hover .client-card-actions{opacity:1}
+/* ── Formats modal ── */
+.formats-modal-inner{display:flex;flex-direction:column;max-height:90vh}
+.formats-modal-header{padding:16px 20px 0;flex-shrink:0}
+.formats-modal-header h3{font-size:16px;font-weight:600}
+.formats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;padding:16px 20px 20px;overflow-y:auto;max-height:70vh}
+.format-card{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden;display:flex;flex-direction:column}
+.format-card-label{padding:6px 10px;font-size:11px;font-weight:600;color:var(--text-secondary);text-align:center;border-top:1px solid var(--border);line-height:1.4}
+.format-card canvas{width:100%;display:block;background:var(--bg-surface)}
+/* ── Calendar ── */
+.calendar-container{height:100%;display:flex;flex-direction:column;padding:16px 24px;gap:12px;overflow:hidden}
+.calendar-header{display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap}
+.calendar-month-title{font-size:18px;font-weight:700;min-width:180px;text-align:center}
+.calendar-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;font-size:11px;font-weight:600;color:var(--text-secondary);flex-shrink:0}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;flex:1;overflow-y:auto}
+.cal-day{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px;min-height:80px;display:flex;flex-direction:column;gap:3px;transition:border-color .2s}
+.cal-day.other-month{opacity:.35}
+.cal-day.today{border-color:var(--accent);background:var(--accent-light)}
+.cal-day.drag-over{border-color:var(--accent);border-style:dashed}
+.cal-day-number{font-size:11px;font-weight:600;color:var(--text-secondary)}
+.cal-item{background:var(--accent);color:white;font-size:10px;padding:2px 5px;border-radius:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:default;display:flex;align-items:center;gap:3px}
+.cal-item-remove{opacity:0;background:none;border:none;color:white;cursor:pointer;font-size:9px;padding:0 2px;margin-left:auto;flex-shrink:0}
+.cal-item:hover .cal-item-remove{opacity:1}
+.platform-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;background:var(--accent)}
+.platform-dot.instagram{background:#e1306c}.platform-dot.linkedin{background:#0077b5}
+.platform-dot.twitter{background:#1da1f2}.platform-dot.tiktok{background:#ff0050}
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <div class="logo">
+      <span class="logo-icon">✦</span>
+      <span class="logo-text">AI Media Studio</span>
+    </div>
+  </div>
+  <nav class="nav-tabs">
+    <button class="nav-tab active" data-tab="generate">Generar</button>
+    <button class="nav-tab" data-tab="gallery">Galería</button>
+    <button class="nav-tab" data-tab="clients">Clientes</button>
+    <button class="nav-tab" data-tab="calendar">Calendario</button>
+    <button class="nav-tab" data-tab="settings">Config</button>
+  </nav>
+  <div class="header-right">
+    <div class="api-status" id="apiStatus">
+      <span class="status-dot"></span>
+      <span class="status-text">Sin API Key</span>
+    </div>
+  </div>
+</header>
+
+<main class="main">
+
+  <!-- GENERATE TAB -->
+  <section class="tab-content active" id="tab-generate">
+    <div class="workspace">
+      <aside class="settings-panel">
+
+        <div class="panel-section" id="clientSelectorSection">
+          <h3 class="panel-title">Cliente</h3>
+          <select class="select" id="clientSelect"><option value="">Sin cliente</option></select>
+          <div class="client-active-info hidden" id="clientActiveInfo">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+              <img id="clientSidebarLogo" src="" alt="" style="display:none;width:28px;height:28px;object-fit:contain;border-radius:3px;border:1px solid var(--border);background:var(--bg-elevated);padding:1px;flex-shrink:0">
+              <p class="client-tone-preview" id="clientTonePreview"></p>
+            </div>
+            <button class="logo-upload-btn hidden" id="useClientLogoBtn" style="width:100%;font-size:11px" onclick="useClientLogoAsRef()">
+              🏢 Usar logo como referencia
+            </button>
+            <button class="logo-upload-btn hidden" id="clearClientLogoBtn" style="width:100%;font-size:11px;border-color:var(--error);color:var(--error)" onclick="clearClientLogoRef()">
+              ✕ Quitar logo de referencia
+            </button>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h3 class="panel-title">Tipo</h3>
+          <div class="type-selector">
+            <button class="type-btn active" data-type="image"><span class="type-icon">🖼️</span><span>Imagen</span></button>
+            <button class="type-btn" data-type="video"><span class="type-icon">🎬</span><span>Video</span></button>
+            <button class="type-btn" data-type="avatar"><span class="type-icon">👤</span><span>Avatar</span></button>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h3 class="panel-title">Modelo</h3>
+          <select class="select" id="modelSelect"></select>
+        </div>
+
+        <!-- Image / Avatar settings -->
+        <div class="panel-section" id="imageSettings">
+          <h3 class="panel-title">Configuración</h3>
+          <div class="form-group">
+            <label class="label">Imágenes de referencia <span class="label-optional">(opcional)</span></label>
+            <div class="img-upload-area" id="imgUploadArea">
+              <!-- Thumbnails grid — visible when ≥1 image loaded -->
+              <div class="ref-images-grid hidden" id="refImagesGrid"></div>
+              <!-- Upload drop zone — collapses to small button when images exist -->
+              <label class="file-upload" id="imgFileUpload" for="imageFileInput">
+                <span class="upload-icon">🖼️</span>
+                <span id="imgUploadLabel">Subir imágenes (múltiple)</span>
+              </label>
+              <input type="file" accept="image/*" id="imageFileInput" multiple style="display:none">
+            </div>
+            <p class="editing-hint hidden" id="editingHint">✏️ Usa <strong>GPT Image</strong> o <strong>Gemini 2.0 Flash</strong> para editar imágenes</p>
+          </div>
+
+          <!-- Brand mockup / composition -->
+          <div class="form-group">
+            <label class="label">🎨 Composición de marca</label>
+            <select class="select" id="mockupTemplate">
+              <option value="">Plantilla… (coloca el logo en una escena)</option>
+              <option value="billboard">Logo en valla urbana</option>
+              <option value="tshirt">Logo en camiseta</option>
+              <option value="mug">Logo en taza</option>
+              <option value="storefront">Logo en escaparate / fachada</option>
+              <option value="businesscard">Logo en tarjeta de visita</option>
+              <option value="phone">Logo en pantalla de móvil</option>
+              <option value="totebag">Logo en bolsa de tela</option>
+              <option value="poster">Logo en póster / cartel</option>
+              <option value="brandbg">Producto sobre fondo de marca</option>
+            </select>
+            <p class="mockup-hint" id="mockupHint">Selecciona una plantilla: usa el logo del cliente y prepara el prompt automáticamente.</p>
+          </div>
+
+          <div class="form-group">
+            <label class="label">Proporción</label>
+            <div class="ratio-grid">
+              <button class="ratio-btn active" data-ratio="1:1">1:1</button>
+              <button class="ratio-btn" data-ratio="16:9">16:9</button>
+              <button class="ratio-btn" data-ratio="9:16">9:16</button>
+              <button class="ratio-btn" data-ratio="4:3">4:3</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="label">Estilo artístico</label>
+            <select class="select" id="styleSelect">
+              <option value="">Sin especificar</option>
+              <option value="photorealistic, ultra detailed">Fotorealista</option>
+              <option value="digital art, vibrant colors">Arte digital</option>
+              <option value="oil painting, artistic">Pintura al óleo</option>
+              <option value="watercolor, soft">Acuarela</option>
+              <option value="3d render, octane render">Render 3D</option>
+              <option value="anime style">Anime</option>
+              <option value="cinematic, dramatic lighting">Cinematográfico</option>
+              <option value="minimalist, clean design">Minimalista</option>
+              <option value="sketch, pencil drawing">Boceto</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Video settings -->
+        <div class="panel-section hidden" id="videoSettings">
+          <h3 class="panel-title">Configuración de video</h3>
+
+          <!-- Video mode: single image vs start→end -->
+          <div class="form-group">
+            <label class="label">Modo</label>
+            <div class="type-selector vid-mode-selector">
+              <button class="vid-mode-btn active" data-vidmode="single">🖼️ Desde imagen</button>
+              <button class="vid-mode-btn" data-vidmode="startend">🎞️ Inicio → Fin</button>
+            </div>
+          </div>
+
+          <!-- Start frame -->
+          <div class="form-group">
+            <label class="label" id="startFrameLabel">Imagen inicial <span class="label-optional">(opcional)</span></label>
+            <div class="img-upload-area">
+              <label class="file-upload" id="videoImageUpload" for="videoImageInput">
+                <span class="upload-icon">🎬</span>
+                <span id="uploadLabel">Subir imagen inicial</span>
+              </label>
+              <input type="file" accept="image/*" id="videoImageInput" style="display:none">
+              <div class="img-preview-box hidden" id="videoPreviewBox">
+                <img class="img-preview-thumb" id="videoPreviewThumb" alt="Vista previa">
+                <div class="img-preview-overlay">
+                  <button class="img-clear-btn" id="clearUpload" title="Quitar imagen">✕</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- End frame (only in start→end mode) -->
+          <div class="form-group hidden" id="endFrameGroup">
+            <label class="label">Imagen final</label>
+            <div class="img-upload-area">
+              <label class="file-upload" id="videoEndImageUpload" for="videoEndImageInput">
+                <span class="upload-icon">🏁</span>
+                <span>Subir imagen final</span>
+              </label>
+              <input type="file" accept="image/*" id="videoEndImageInput" style="display:none">
+              <div class="img-preview-box hidden" id="videoEndPreviewBox">
+                <img class="img-preview-thumb" id="videoEndPreviewThumb" alt="Vista previa">
+                <div class="img-preview-overlay">
+                  <button class="img-clear-btn" id="clearEndUpload" title="Quitar imagen">✕</button>
+                </div>
+              </div>
+            </div>
+            <p class="mockup-hint">El vídeo transicionará desde la imagen inicial hasta la final.</p>
+          </div>
+
+          <!-- Duration + aspect ratio -->
+          <div class="form-group">
+            <div style="display:flex;gap:8px">
+              <div style="flex:1">
+                <label class="label">Duración</label>
+                <select class="select" id="videoDuration">
+                  <option value="">Por defecto</option>
+                  <option value="5">5 segundos</option>
+                  <option value="10">10 segundos</option>
+                </select>
+              </div>
+              <div style="flex:1">
+                <label class="label">Formato</label>
+                <select class="select" id="videoAspect">
+                  <option value="">Por defecto</option>
+                  <option value="16:9">16:9 horizontal</option>
+                  <option value="9:16">9:16 vertical (Reels)</option>
+                  <option value="1:1">1:1 cuadrado</option>
+                  <option value="4:3">4:3 clásico</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Motion / animation templates -->
+          <div class="form-group">
+            <label class="label">🎥 Movimiento / Animación</label>
+            <select class="select" id="motionTemplate">
+              <option value="">Plantilla de movimiento…</option>
+              <option value="zoomin">Zoom lento de acercamiento</option>
+              <option value="zoomout">Zoom lento de alejamiento</option>
+              <option value="orbit">Órbita cinematográfica alrededor</option>
+              <option value="pan">Paneo lateral suave</option>
+              <option value="logoreveal">Revelado de logo con luz</option>
+              <option value="parallax">Parallax / profundidad 3D</option>
+              <option value="dronetop">Vista dron / cenital descendente</option>
+              <option value="glitch">Transición glitch / digital</option>
+              <option value="particles">Partículas y destellos de marca</option>
+              <option value="livescene">Dar vida a la escena (gente, luces)</option>
+            </select>
+            <p class="mockup-hint" id="motionHint">Selecciona el tipo de movimiento: prepara el prompt automáticamente.</p>
+          </div>
+        </div>
+
+        <!-- Avatar settings -->
+        <div class="panel-section hidden" id="avatarSettings">
+          <h3 class="panel-title">Estilo de avatar</h3>
+          <div class="form-group">
+            <label class="label">Tipo</label>
+            <select class="select" id="avatarStyle">
+              <option value="professional headshot, studio lighting">Profesional</option>
+              <option value="cartoon avatar, cute style">Cartoon</option>
+              <option value="3D animated avatar">3D Animado</option>
+              <option value="pixel art avatar">Pixel Art</option>
+              <option value="realistic portrait, detailed">Retrato realista</option>
+              <option value="fantasy character portrait">Fantasía</option>
+              <option value="cyberpunk character">Cyberpunk</option>
+            </select>
+          </div>
+        </div>
+
+      </aside>
+
+      <div class="main-area">
+        <div class="result-area" id="resultArea">
+          <div class="result-placeholder" id="resultPlaceholder">
+            <div class="placeholder-content">
+              <div class="placeholder-icon">✦</div>
+              <p>Tu contenido aparecerá aquí</p>
+              <p class="placeholder-sub">Escribe un prompt y pulsa Generar (Ctrl+Enter)</p>
+            </div>
+          </div>
+          <div class="result-content hidden" id="resultContent">
+            <img class="result-image hidden" id="resultImage" alt="Generated">
+            <video class="result-video hidden" id="resultVideo" controls playsinline></video>
+            <div class="result-actions" id="resultActions">
+              <button class="btn btn-secondary" id="downloadBtn">⬇ Descargar</button>
+              <button class="btn btn-secondary hidden" id="openVideoBtn">📺 Abrir video</button>
+              <button class="btn btn-secondary hidden" id="captionBtn">✍️ Captions</button>
+              <button class="btn btn-secondary hidden" id="formatsBtn">📐 Formatos</button>
+              <button class="btn btn-secondary hidden" id="scheduleBtn">📅 Programar</button>
+              <button class="btn btn-secondary" id="copyPromptBtn">📋 Copiar prompt</button>
+              <button class="btn btn-secondary" id="useAsInputBtn">🎬 Usar en video</button>
+            </div>
+            <!-- Caption panel — shown when ✍️ Captions is clicked -->
+            <div class="caption-panel hidden" id="captionPanel">
+              <div class="caption-panel-header">
+                <div class="caption-tabs">
+                  <button class="caption-tab active" data-platform="instagram">Instagram</button>
+                  <button class="caption-tab" data-platform="linkedin">LinkedIn</button>
+                  <button class="caption-tab" data-platform="twitter">Twitter/X</button>
+                  <button class="caption-tab" data-platform="tiktok">TikTok</button>
+                </div>
+                <div class="caption-header-actions">
+                  <button class="btn btn-primary btn-sm" id="generateCaptionsBtn">✨ Generar con IA</button>
+                  <button class="caption-close-btn" id="closeCaptionPanel">✕</button>
+                </div>
+              </div>
+              <div class="caption-body">
+                <div class="caption-pane" data-platform="instagram">
+                  <div class="caption-counter"><span class="caption-char-count" id="cc-instagram">0</span>/2200</div>
+                  <textarea class="caption-textarea" id="caption-instagram" placeholder="Caption para Instagram..."></textarea>
+                  <div class="caption-footer">
+                    <div class="caption-hashtags" id="hashtags-instagram"></div>
+                    <button class="btn btn-secondary btn-sm" onclick="copyCaptionText('instagram')">📋 Copiar</button>
+                  </div>
+                </div>
+                <div class="caption-pane hidden" data-platform="linkedin">
+                  <div class="caption-counter"><span class="caption-char-count" id="cc-linkedin">0</span>/700</div>
+                  <textarea class="caption-textarea" id="caption-linkedin" placeholder="Caption para LinkedIn..."></textarea>
+                  <div class="caption-footer">
+                    <div class="caption-hashtags" id="hashtags-linkedin"></div>
+                    <button class="btn btn-secondary btn-sm" onclick="copyCaptionText('linkedin')">📋 Copiar</button>
+                  </div>
+                </div>
+                <div class="caption-pane hidden" data-platform="twitter">
+                  <div class="caption-counter"><span class="caption-char-count" id="cc-twitter">0</span>/280</div>
+                  <textarea class="caption-textarea" id="caption-twitter" placeholder="Caption para Twitter/X..."></textarea>
+                  <div class="caption-footer">
+                    <div class="caption-hashtags" id="hashtags-twitter"></div>
+                    <button class="btn btn-secondary btn-sm" onclick="copyCaptionText('twitter')">📋 Copiar</button>
+                  </div>
+                </div>
+                <div class="caption-pane hidden" data-platform="tiktok">
+                  <div class="caption-counter"><span class="caption-char-count" id="cc-tiktok">0</span>/150</div>
+                  <textarea class="caption-textarea" id="caption-tiktok" placeholder="Caption para TikTok..."></textarea>
+                  <div class="caption-footer">
+                    <div class="caption-hashtags" id="hashtags-tiktok"></div>
+                    <button class="btn btn-secondary btn-sm" onclick="copyCaptionText('tiktok')">📋 Copiar</button>
+                  </div>
+                </div>
+              </div>
+              <div class="caption-generating hidden" id="captionGenerating">
+                <div class="loader-ring" style="width:20px;height:20px;border-width:2px"></div>
+                <span>Generando captions con IA...</span>
+              </div>
+            </div>
+          </div>
+          <div class="loading-overlay hidden" id="loadingOverlay">
+            <div class="loader"><div class="loader-ring"></div></div>
+            <p class="loading-text" id="loadingText">Generando...</p>
+            <p class="loading-sub" id="loadingSubText">Esto puede tardar unos segundos</p>
+          </div>
+        </div>
+
+        <div class="prompt-area">
+          <div class="prompt-container">
+            <div class="prompt-input-wrapper">
+              <textarea class="prompt-input" id="promptInput"
+                placeholder="Describe lo que quieres crear... (Ej: 'Un dragón dorado volando sobre una ciudad futurista al atardecer')"
+                rows="3" spellcheck="false"></textarea>
+              <div class="prompt-tools">
+                <button class="prompt-tool-btn" id="clearPromptBtn" title="Limpiar">✕</button>
+              </div>
+            </div>
+            <div class="negative-prompt-wrapper">
+              <button class="toggle-btn" id="toggleNegative">＋ Prompt negativo</button>
+              <textarea class="prompt-input negative-prompt hidden" id="negativePrompt"
+                placeholder="Qué NO quieres... (Ej: 'borroso, deformado, baja calidad')" rows="2"></textarea>
+            </div>
+            <div class="prompt-footer">
+              <span class="char-count"><span id="charCount">0</span> caracteres</span>
+              <button class="btn btn-primary generate-btn" id="generateBtn">
+                <span>⚡</span><span>Generar</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GALLERY TAB -->
+  <section class="tab-content hidden" id="tab-gallery">
+    <div class="gallery-container">
+      <div class="gallery-header">
+        <h2 class="gallery-title">Galería</h2>
+        <div class="gallery-filters">
+          <button class="filter-btn active" data-filter="all">Todos</button>
+          <button class="filter-btn" data-filter="image">Imágenes</button>
+          <button class="filter-btn" data-filter="video">Videos</button>
+          <button class="filter-btn" data-filter="avatar">Avatares</button>
+        </div>
+      </div>
+      <div class="gallery-grid" id="galleryGrid">
+        <div class="gallery-empty" id="galleryEmpty">
+          <div class="empty-icon">🖼️</div>
+          <p>No hay contenido guardado aún.</p>
+          <p>¡Genera algo para verlo aquí!</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SETTINGS TAB -->
+  <section class="tab-content hidden" id="tab-settings">
+    <div class="settings-container">
+      <h2 class="settings-title">Configuración</h2>
+      <div class="settings-card">
+        <h3>🔑 API Key de OpenRouter</h3>
+        <p class="settings-desc">Tu API key se guarda en este navegador (localStorage). Nunca se envía a ningún servidor propio.</p>
+        <div class="input-group">
+          <input type="password" class="input" id="apiKeyInput" placeholder="sk-or-v1-..." autocomplete="off">
+          <button class="btn btn-primary" id="saveApiKeyBtn">Guardar</button>
+          <button class="btn btn-secondary" id="toggleApiKeyBtn">👁</button>
+        </div>
+        <p class="api-key-info" id="apiKeyInfo"></p>
+      </div>
+      <div class="settings-card">
+        <h3>📖 Cómo obtener tu API Key</h3>
+        <ol class="settings-steps">
+          <li>Ve a <strong>openrouter.ai</strong> y crea una cuenta gratuita</li>
+          <li>En el panel, ve a <strong>Keys</strong> y crea una nueva API key</li>
+          <li>Copia la key (empieza con <code>sk-or-v1-</code>)</li>
+          <li>Pégala arriba y pulsa Guardar</li>
+        </ol>
+        <p class="settings-note">💡 Modelos como <strong>FLUX Schnell</strong> son gratuitos. Edición de imagen requiere <strong>Gemini Image</strong> o <strong>GPT Image</strong>.</p>
+      </div>
+      <!-- PROMPT OPTIMIZER — IMAGE -->
+      <div class="settings-card">
+        <div class="optimizer-header">
+          <div>
+            <h3 style="margin-bottom:3px">🖼️ Optimizador — Imágenes</h3>
+            <p class="settings-desc" style="margin:0;font-size:11px">Se activa al generar imágenes y avatares.</p>
+          </div>
+          <div class="toggle-group">
+            <span class="toggle-label" id="imgOptimizerStatus">Desactivado</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="imgOptimizerEnabled">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+        <div class="optimizer-actions" style="margin-bottom:8px">
+          <button class="btn btn-secondary btn-sm" id="uploadImgMdBtn">📄 Subir MD</button>
+          <input type="file" id="imgMdFileInput" accept=".md,.txt" style="display:none">
+          <select class="select" id="imgOptimizerModel" style="flex:1;font-size:12px;padding:5px 8px">
+            <option value="google/gemini-2.0-flash-lite:free">Gemini Flash Lite (Gratis)</option>
+            <option value="meta-llama/llama-3.1-8b-instruct:free">Llama 3.1 8B (Gratis)</option>
+            <option value="mistralai/mistral-7b-instruct:free">Mistral 7B (Gratis)</option>
+            <option value="openai/gpt-4o-mini">GPT-4o Mini</option>
+            <option value="google/gemini-2.0-flash-exp:free">Gemini 2.0 Flash (Gratis)</option>
+          </select>
+        </div>
+        <textarea class="prompt-input" id="imgSystemPromptInput" style="resize:vertical;min-height:140px"
+          placeholder="Ej: Eres un experto en prompts para FLUX y Stable Diffusion. Recibes una descripción en español y devuelves un prompt optimizado en inglés con detalles de iluminación, composición y estilo artístico. Devuelve SOLO el prompt final, sin explicaciones."></textarea>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;gap:8px">
+          <p class="settings-note" style="margin:0;flex:1">💡 El prompt pasa por este modelo antes de generar la imagen.</p>
+          <button class="btn btn-primary btn-sm" id="saveImgSystemPromptBtn">Guardar</button>
+        </div>
+        <div id="lastImgOptimizedWrap" style="display:none">
+          <p style="font-size:11px;color:var(--text-muted);margin:10px 0 4px">Último prompt optimizado:</p>
+          <div class="optimizer-preview" id="lastImgOptimizedPrompt"></div>
+        </div>
+      </div>
+
+      <!-- PROMPT OPTIMIZER — VIDEO -->
+      <div class="settings-card">
+        <div class="optimizer-header">
+          <div>
+            <h3 style="margin-bottom:3px">🎬 Optimizador — Videos</h3>
+            <p class="settings-desc" style="margin:0;font-size:11px">Se activa al generar vídeos.</p>
+          </div>
+          <div class="toggle-group">
+            <span class="toggle-label" id="vidOptimizerStatus">Desactivado</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="vidOptimizerEnabled">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+        <div class="optimizer-actions" style="margin-bottom:8px">
+          <button class="btn btn-secondary btn-sm" id="uploadVidMdBtn">📄 Subir MD</button>
+          <input type="file" id="vidMdFileInput" accept=".md,.txt" style="display:none">
+          <select class="select" id="vidOptimizerModel" style="flex:1;font-size:12px;padding:5px 8px">
+            <option value="google/gemini-2.0-flash-lite:free">Gemini Flash Lite (Gratis)</option>
+            <option value="meta-llama/llama-3.1-8b-instruct:free">Llama 3.1 8B (Gratis)</option>
+            <option value="mistralai/mistral-7b-instruct:free">Mistral 7B (Gratis)</option>
+            <option value="openai/gpt-4o-mini">GPT-4o Mini</option>
+            <option value="google/gemini-2.0-flash-exp:free">Gemini 2.0 Flash (Gratis)</option>
+          </select>
+        </div>
+        <textarea class="prompt-input" id="vidSystemPromptInput" style="resize:vertical;min-height:140px"
+          placeholder="Ej: Eres un experto en prompts para generación de vídeo IA (Kling, Seedance, Sora). Recibes una descripción en español y devuelves un prompt en inglés cinematográfico con movimiento de cámara, iluminación y acción. Máximo 150 palabras. Devuelve SOLO el prompt final."></textarea>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;gap:8px">
+          <p class="settings-note" style="margin:0;flex:1">💡 El prompt pasa por este modelo antes de generar el vídeo.</p>
+          <button class="btn btn-primary btn-sm" id="saveVidSystemPromptBtn">Guardar</button>
+        </div>
+        <div id="lastVidOptimizedWrap" style="display:none">
+          <p style="font-size:11px;color:var(--text-muted);margin:10px 0 4px">Último prompt optimizado:</p>
+          <div class="optimizer-preview" id="lastVidOptimizedPrompt"></div>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <h3>ℹ️ Modelos disponibles</h3>
+        <div class="model-info-grid" id="modelInfoGrid">
+          <p class="settings-desc">Guarda tu API key para ver todos los modelos disponibles.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CLIENTS TAB -->
+  <section class="tab-content hidden" id="tab-clients">
+    <div class="clients-container">
+      <div class="clients-header">
+        <h2 class="gallery-title">Clientes</h2>
+        <button class="btn btn-primary btn-sm" id="newClientBtn">＋ Nuevo cliente</button>
+      </div>
+      <div class="clients-grid" id="clientsGrid">
+        <div class="clients-empty"><div class="empty-icon">👤</div><p>No hay clientes configurados aún.</p><p>Crea tu primer perfil de marca.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CALENDAR TAB -->
+  <section class="tab-content hidden" id="tab-calendar">
+    <div class="calendar-container">
+      <div class="calendar-header">
+        <button class="btn btn-secondary btn-sm" id="calPrevBtn">← Anterior</button>
+        <h2 class="calendar-month-title" id="calMonthTitle"></h2>
+        <button class="btn btn-secondary btn-sm" id="calNextBtn">Siguiente →</button>
+        <button class="btn btn-secondary btn-sm" id="exportCalCsvBtn" style="margin-left:auto">⬇ CSV</button>
+      </div>
+      <div class="calendar-weekdays">
+        <div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div>
+      </div>
+      <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
+  </section>
+
+</main>
+
+<!-- Client Modal -->
+<div class="modal hidden" id="clientModal">
+  <div class="modal-backdrop" id="clientModalBackdrop"></div>
+  <div class="modal-content" style="max-width:460px">
+    <button class="modal-close" id="clientModalClose">✕</button>
+    <div class="modal-info" style="padding:20px 24px">
+      <h3 id="clientModalTitle" style="margin-bottom:16px;font-size:16px;font-weight:600">Nuevo cliente</h3>
+      <input type="hidden" id="clientEditId">
+
+      <!-- Logo + color palette -->
+      <div class="form-group">
+        <label class="label">Logo de la marca</label>
+        <div class="logo-upload-row">
+          <div class="logo-preview-box" id="logoPreviewBox" onclick="document.getElementById('logoFileInput').click()" title="Subir logo">
+            <span id="logoPreviewPlaceholder">🏢</span>
+            <img id="logoPreviewImg" style="display:none" alt="Logo">
+          </div>
+          <div class="logo-upload-right">
+            <button class="logo-upload-btn" onclick="document.getElementById('logoFileInput').click()">📁 Subir logo (PNG/JPG/SVG)</button>
+            <input type="file" id="logoFileInput" accept="image/*" style="display:none">
+            <div class="color-swatches" id="colorSwatches">
+              <span class="color-swatch-label">Sube el logo para extraer la paleta</span>
+            </div>
+            <p class="color-palette-hint" id="colorPaletteHint"></p>
+          </div>
+        </div>
+        <input type="hidden" id="clientLogoData">
+        <input type="hidden" id="clientColorsData">
+      </div>
+
+      <div class="form-group"><label class="label">Nombre *</label><input type="text" class="input" id="clientName" placeholder="Ej: Café Nórdico" style="width:100%"></div>
+      <div class="form-group"><label class="label">Estilo visual</label><input type="text" class="input" id="clientStyle" placeholder="Ej: minimalista, colores cálidos, lifestyle" style="width:100%"></div>
+      <div class="form-group"><label class="label">Tono de voz</label><input type="text" class="input" id="clientTone" placeholder="Ej: cercano, inspirador, profesional" style="width:100%"></div>
+      <div class="form-group"><label class="label">Hashtags predeterminados</label><input type="text" class="input" id="clientHashtags" placeholder="Ej: cafenordico, specialtycoffee, morning" style="width:100%"></div>
+      <div class="form-group"><label class="label">Restricciones / evitar</label><textarea class="prompt-input" id="clientRestrictions" placeholder="Ej: no usar colores oscuros, no mencionar competidores" rows="2" style="margin-top:0"></textarea></div>
+      <div class="modal-actions" style="margin-top:16px;justify-content:flex-end">
+        <button class="btn btn-secondary" id="clientCancelBtn">Cancelar</button>
+        <button class="btn btn-primary" id="clientSaveBtn">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Formats Modal -->
+<div class="modal hidden" id="formatsModal">
+  <div class="modal-backdrop" id="formatsModalBackdrop"></div>
+  <div class="modal-content formats-modal-inner" style="max-width:min(92vw,840px)">
+    <button class="modal-close" id="formatsModalClose">✕</button>
+    <div class="formats-modal-header"><h3>📐 Exportar por formato</h3></div>
+    <div class="formats-grid" id="formatsGrid"></div>
+  </div>
+</div>
+
+<!-- Schedule Modal -->
+<div class="modal hidden" id="scheduleModal">
+  <div class="modal-backdrop" id="scheduleModalBackdrop"></div>
+  <div class="modal-content" style="max-width:360px">
+    <button class="modal-close" id="scheduleModalClose">✕</button>
+    <div class="modal-info" style="padding:20px 24px">
+      <h3 style="margin-bottom:16px;font-size:16px;font-weight:600">📅 Programar publicación</h3>
+      <div class="form-group"><label class="label">Fecha</label><input type="date" class="input" id="scheduleDate" style="width:100%"></div>
+      <div class="form-group"><label class="label">Plataforma</label>
+        <select class="select" id="schedulePlatform">
+          <option value="instagram">Instagram</option>
+          <option value="linkedin">LinkedIn</option>
+          <option value="twitter">Twitter/X</option>
+          <option value="tiktok">TikTok</option>
+          <option value="other">Otro</option>
+        </select>
+      </div>
+      <div class="modal-actions" style="margin-top:16px;justify-content:flex-end">
+        <button class="btn btn-secondary" id="scheduleCancelBtn">Cancelar</button>
+        <button class="btn btn-primary" id="scheduleConfirmBtn">Programar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal hidden" id="imageModal">
+  <div class="modal-backdrop" id="modalBackdrop"></div>
+  <div class="modal-content">
+    <button class="modal-close" id="modalClose">✕</button>
+    <img class="modal-image hidden" id="modalImage" alt="">
+    <video class="modal-video hidden" id="modalVideo" controls></video>
+    <div class="modal-info">
+      <p class="modal-prompt" id="modalPrompt"></p>
+      <p class="modal-meta" id="modalMeta"></p>
+      <div class="modal-actions">
+        <button class="btn btn-secondary btn-sm" id="modalDownloadBtn">⬇ Descargar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIG — OpenRouter API called directly from browser
+// ============================================================
+const OR_BASE = 'https://openrouter.ai/api/v1';
+
+const IMAGES_ENDPOINT_MODELS = [
+  { id: 'black-forest-labs/flux-schnell:free', name: 'FLUX Schnell', provider: 'Black Forest Labs', free: true,  endpoint: 'images', editing: false },
+  { id: 'black-forest-labs/flux-schnell',      name: 'FLUX Schnell Pro', provider: 'Black Forest Labs', free: false, endpoint: 'images', editing: false },
+  { id: 'black-forest-labs/flux-pro',          name: 'FLUX Pro',    provider: 'Black Forest Labs', free: false, endpoint: 'images', editing: false },
+  { id: 'black-forest-labs/flux-1.1-pro',      name: 'FLUX 1.1 Pro', provider: 'Black Forest Labs', free: false, endpoint: 'images', editing: false },
+  { id: 'black-forest-labs/flux-1.1-pro:ultra',name: 'FLUX 1.1 Pro Ultra', provider: 'Black Forest Labs', free: false, endpoint: 'images', editing: false },
+  { id: 'stabilityai/stable-diffusion-3-5-large', name: 'SD 3.5 Large', provider: 'Stability AI', free: false, endpoint: 'images', editing: false },
+  { id: 'stabilityai/stable-diffusion-xl-base-1.0', name: 'SDXL Base', provider: 'Stability AI', free: false, endpoint: 'images', editing: false },
+  { id: 'recraft-ai/recraft-v3', name: 'Recraft V3', provider: 'Recraft', free: false, endpoint: 'images', editing: false },
+];
+
+// Video models from OpenRouter's /api/v1/videos endpoint (14 confirmed)
+const STATIC_VIDEO_MODELS = [
+  { id: 'x-ai/grok-imagine-video',     name: 'Grok Imagine Video',   provider: 'xAI',       free: false },
+  { id: 'kwaivgi/kling-v3.0-pro',      name: 'Kling v3.0 Pro',       provider: 'Kuaishou',  free: false },
+  { id: 'kwaivgi/kling-v3.0-std',      name: 'Kling v3.0 Standard',  provider: 'Kuaishou',  free: false },
+  { id: 'kwaivgi/kling-video-o1',      name: 'Kling Video O1',       provider: 'Kuaishou',  free: false },
+  { id: 'google/veo-3.1',              name: 'Veo 3.1',              provider: 'Google',    free: false },
+  { id: 'google/veo-3.1-fast',         name: 'Veo 3.1 Fast',         provider: 'Google',    free: false },
+  { id: 'google/veo-3.1-lite',         name: 'Veo 3.1 Lite',         provider: 'Google',    free: false },
+  { id: 'openai/sora-2-pro',           name: 'Sora 2 Pro',           provider: 'OpenAI',    free: false },
+  { id: 'bytedance/seedance-2.0',      name: 'Seedance 2.0',         provider: 'ByteDance', free: false },
+  { id: 'bytedance/seedance-2.0-fast', name: 'Seedance 2.0 Fast',    provider: 'ByteDance', free: false },
+  { id: 'bytedance/seedance-1-5-pro',  name: 'Seedance 1.5 Pro',     provider: 'ByteDance', free: false },
+  { id: 'alibaba/wan-2.7',             name: 'Wan 2.7',              provider: 'Alibaba',   free: false },
+  { id: 'alibaba/wan-2.6',             name: 'Wan 2.6',              provider: 'Alibaba',   free: false },
+  { id: 'minimax/hailuo-2.3',          name: 'Hailuo 2.3',           provider: 'MiniMax',   free: false },
+];
+
+const CHAT_IMAGE_PREFIXES = ['openai/gpt-image', 'openai/gpt-4o-image', 'google/gemini-2.0-flash-exp', 'google/gemini-flash-1.5-imagen'];
+const CHAT_EXCLUDE_PREFIXES = ['openrouter/', 'mistralai/', 'anthropic/', 'meta-llama/', 'cohere/'];
+
+function isChatImageModel(id) { return CHAT_IMAGE_PREFIXES.some(p => id.startsWith(p)); }
+function useImagesEndpoint(id) { return IMAGES_ENDPOINT_MODELS.some(m => m.id === id); }
+
+// ============================================================
+// STATE
+// ============================================================
+console.log('[AI Media Studio] standalone v10 — Tier 1 features');
+const state = {
+  apiKey: localStorage.getItem('openrouter_api_key') || '',
+  activeType: 'image',
+  activeFilter: 'all',
+  gallery: [],
+  currentResult: null,
+  generating: false,
+  models: { image: [...IMAGES_ENDPOINT_MODELS], video: [...STATIC_VIDEO_MODELS] },
+  uploadedImageBase64: null,
+  uploadedImageEndBase64: null, // last frame for start→end video mode
+  videoMode: 'single',          // 'single' | 'startend'
+  refImages: [], // array of base64 strings for multi-reference
+  currentModalItem: null,
+  // Tier 1
+  clients: [],
+  activeClientId: '',
+  calendar: {},
+  calViewDate: new Date(),
+};
+const CLIENTS_KEY        = 'am_clients';
+const CALENDAR_KEY       = 'am_calendar';
+const IMG_SYSTEM_PROMPT_KEY = 'am_img_system_prompt';
+const IMG_OPTIMIZER_KEY     = 'am_img_optimizer_enabled';
+const IMG_OPTIMIZER_MODEL   = 'am_img_optimizer_model';
+const VID_SYSTEM_PROMPT_KEY = 'am_vid_system_prompt';
+const VID_OPTIMIZER_KEY     = 'am_vid_optimizer_enabled';
+const VID_OPTIMIZER_MODEL   = 'am_vid_optimizer_model';
+const CAPTION_LIMITS = { instagram:2200, linkedin:700, twitter:280, tiktok:150 };
+// Caption models tried in order until one succeeds
+const CAPTION_MODELS = [
+  'google/gemini-2.0-flash-lite:free',
+  'meta-llama/llama-3.1-8b-instruct:free',
+  'mistralai/mistral-7b-instruct:free',
+  'openai/gpt-4o-mini',
+];
+const EXPORT_FORMATS = [
+  { id:'ig_feed',    label:'Instagram Feed',    w:1080, h:1080 },
+  { id:'ig_stories', label:'Stories / Reels',   w:1080, h:1920 },
+  { id:'linkedin',   label:'LinkedIn',          w:1200, h:628  },
+  { id:'twitter',    label:'Twitter/X',         w:1200, h:675  },
+  { id:'pinterest',  label:'Pinterest',         w:1000, h:1500 },
+];
+
+// ============================================================
+// GALLERY — localStorage
+// ============================================================
+const GALLERY_KEY = 'ai_media_studio_gallery';
+
+function loadGalleryFromStorage() {
+  try { state.gallery = JSON.parse(localStorage.getItem(GALLERY_KEY) || '[]'); }
+  catch { state.gallery = []; }
+}
+
+function saveGalleryToStorage() {
+  try { localStorage.setItem(GALLERY_KEY, JSON.stringify(state.gallery)); }
+  catch (e) {
+    // Storage full — remove oldest items until it fits
+    if (state.gallery.length > 1) {
+      state.gallery = state.gallery.slice(0, Math.floor(state.gallery.length / 2));
+      saveGalleryToStorage();
+    }
+  }
+}
+
+function addToGallery(item) {
+  state.gallery.unshift(item);
+  saveGalleryToStorage();
+}
+
+// ============================================================
+// IMAGE HELPERS
+// ============================================================
+async function normalizeImageOrientation(file) {
+  const bitmap = await createImageBitmap(file);
+  const canvas = document.createElement('canvas');
+  canvas.width = bitmap.width; canvas.height = bitmap.height;
+  canvas.getContext('2d').drawImage(bitmap, 0, 0);
+  bitmap.close();
+  return canvas.toDataURL('image/jpeg', 0.88);
+}
+
+function extractImageUrl(data) {
+  if (data.data?.[0]?.url) return data.data[0].url;
+  if (data.data?.[0]?.b64_json) return `data:image/png;base64,${data.data[0].b64_json}`;
+
+  // OpenRouter puts images in message.images[] for Gemini/GPT Image models
+  const msgImages = data.choices?.[0]?.message?.images;
+  if (Array.isArray(msgImages) && msgImages.length > 0) {
+    const img = msgImages[0];
+    if (img.type === 'image_url' && img.image_url?.url) return img.image_url.url;
+    if (img.url) return img.url;
+  }
+
+  const content = data.choices?.[0]?.message?.content;
+  if (typeof content === 'string') {
+    const mdMatch = content.match(/!\[.*?\]\((https?:\/\/[^)]+)\)/);
+    if (mdMatch) return mdMatch[1];
+    const b64Match = content.match(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]+/);
+    if (b64Match) return b64Match[0];
+    const urlMatch = content.match(/https?:\/\/\S+\.(png|jpg|jpeg|webp|gif)/i);
+    if (urlMatch) return urlMatch[0];
+    if (content.trim().startsWith('http')) return content.trim();
+  }
+  if (Array.isArray(content)) {
+    for (const part of content) {
+      if (part.type === 'image_url') return part.image_url?.url;
+      if (part.inline_data?.data) return `data:${part.inline_data.mime_type||'image/png'};base64,${part.inline_data.data}`;
+    }
+  }
+  const parts = data.candidates?.[0]?.content?.parts;
+  if (Array.isArray(parts)) {
+    for (const p of parts) {
+      if (p.inlineData?.data) return `data:${p.inlineData.mimeType||'image/png'};base64,${p.inlineData.data}`;
+      if (p.fileData?.fileUri) return p.fileData.fileUri;
+    }
+  }
+  return null;
+}
+
+// ============================================================
+// MODELS
+// ============================================================
+function setModelLoadingState(loading) {
+  const sel = document.getElementById('modelSelect');
+  if (loading) { sel.innerHTML = '<option disabled selected>Cargando modelos...</option>'; sel.disabled = true; }
+  else { sel.disabled = false; }
+}
+
+async function loadModels() {
+  if (state.apiKey) await loadLiveModels();
+  else {
+    populateModelSelect(state.activeType === 'video' ? 'video' : 'image');
+    renderModelInfo();
+  }
+}
+
+async function loadLiveModels() {
+  setModelLoadingState(true);
+  try {
+    const r = await fetch(`${OR_BASE}/models`, { headers: { Authorization: `Bearer ${state.apiKey}` } });
+    if (!r.ok) throw new Error('models failed');
+    const data = await r.json();
+    const all = data.data || [];
+
+    // Detect chat-completions image models (strict: explicit ->image output)
+    const chatImageModels = all.filter(m => {
+      if (CHAT_EXCLUDE_PREFIXES.some(p => m.id.startsWith(p))) return false;
+      const mod = (m.architecture?.modality || '').toLowerCase();
+      const outMods = (m.architecture?.output_modalities || []).map(x => x.toLowerCase());
+      const hasExplicitImageOut = mod.includes('->image') || outMods.some(x => x === 'image');
+      const isKnown = CHAT_IMAGE_PREFIXES.some(p => m.id.startsWith(p));
+      return hasExplicitImageOut || isKnown;
+    }).map(m => {
+      const isFree = m.id.endsWith(':free');
+      const provider = (m.id.split('/')[0]||'').replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+      const name = (m.name||m.id).replace(/\[|\]/g,'').replace(/\s+/g,' ').trim();
+      return { id: m.id, name, provider, editing: true, free: isFree, endpoint: 'chat' };
+    }).sort((a,b) => a.name.localeCompare(b.name));
+
+    state.models.image = [...IMAGES_ENDPOINT_MODELS, ...chatImageModels];
+    state.models.video = [...STATIC_VIDEO_MODELS];
+  } catch {
+    state.models = { image: [...IMAGES_ENDPOINT_MODELS], video: [...STATIC_VIDEO_MODELS] };
+  } finally {
+    setModelLoadingState(false);
+    populateModelSelect(state.activeType === 'video' ? 'video' : 'image');
+    renderModelInfo();
+  }
+}
+
+function populateModelSelect(type, filterList = null) {
+  const sel = document.getElementById('modelSelect');
+  sel.innerHTML = '';
+  let models = filterList || (type === 'video' ? state.models.video : state.models.image);
+  models.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m.id;
+    opt.textContent = m.name + (m.free ? ' (Gratis)' : '') + (m.editing ? ' ✏️' : '');
+    sel.appendChild(opt);
+  });
+  if (sel.options.length > 0) sel.selectedIndex = 0;
+}
+
+function renderModelInfo() {
+  const grid = document.getElementById('modelInfoGrid');
+  const images = state.models.image || [], videos = state.models.video || [];
+  const all = [...images, ...videos];
+  if (all.length === 0) { grid.innerHTML = '<p class="settings-desc">Guarda tu API key para ver todos los modelos disponibles.</p>'; return; }
+  const totalFree = all.filter(m => m.free).length;
+  grid.innerHTML = `
+    <div class="model-summary">
+      <span>🖼️ ${images.length} modelos de imagen</span>
+      <span>🎬 ${videos.length} modelos de video</span>
+      <span>🆓 ${totalFree} gratuitos</span>
+    </div>
+    ${all.map(m => `
+      <div class="model-info-item">
+        <div class="model-name">${escHtml(m.name)}
+          ${m.free ? '<span class="model-badge free">GRATIS</span>' : ''}
+          ${m.editing ? '<span class="model-badge edit">EDICIÓN</span>' : ''}
+        </div>
+        <div class="model-provider">${escHtml(m.provider||'')}</div>
+      </div>`).join('')}`;
+}
+
+// ============================================================
+// GENERATE
+// ============================================================
+async function generate() {
+  const prompt = document.getElementById('promptInput').value.trim();
+  if (!prompt) { showToast('Escribe un prompt para continuar', 'error'); return; }
+  if (!state.apiKey) { showToast('Añade tu API key en Configuración primero', 'warning'); switchTab('settings'); return; }
+  if (state.generating) return;
+
+  state.generating = true;
+  document.getElementById('generateBtn').disabled = true;
+  document.getElementById('resultPlaceholder').classList.add('hidden');
+  document.getElementById('resultContent').classList.add('hidden');
+  document.getElementById('loadingOverlay').classList.remove('hidden');
+
+  const isVideo = state.activeType === 'video';
+  document.getElementById('loadingText').textContent = isVideo ? 'Generando video...' : 'Generando imagen...';
+  document.getElementById('loadingSubText').textContent = isVideo ? 'Los videos pueden tardar 1-3 minutos' : 'Esto puede tardar unos segundos';
+
+  try {
+    const selectedModel = document.getElementById('modelSelect').value;
+    const style = document.getElementById('styleSelect')?.value || '';
+    const avatarStyle = document.getElementById('avatarStyle')?.value || '';
+    const negativePrompt = document.getElementById('negativePrompt').value.trim();
+    const effectiveStyle = state.activeType === 'avatar' ? avatarStyle : style;
+    const activeClient = state.clients.find(c=>c.id===state.activeClientId);
+    const colorCtx = activeClient?.colors?.length ? `, brand colors: ${activeClient.colors.slice(0,4).join(', ')}` : '';
+    const clientCtx = activeClient ? `, visual style: ${activeClient.style||''}${colorCtx}${activeClient.restrictions?', avoid: '+activeClient.restrictions:''}` : '';
+
+    // Run through prompt optimizer if enabled (separate for image vs video)
+    let basePrompt = prompt;
+    const optimizerType = isVideo ? 'video' : 'image';
+    const optimizerKey  = isVideo ? 'vidOptimizerEnabled' : 'imgOptimizerEnabled';
+    if (document.getElementById(optimizerKey)?.checked) {
+      document.getElementById('loadingText').textContent = 'Optimizando prompt...';
+      basePrompt = await optimizePrompt(prompt, optimizerType);
+    }
+
+    const fullPrompt = effectiveStyle ? `${basePrompt}, ${effectiveStyle}${clientCtx}` : `${basePrompt}${clientCtx}`;
+
+    const headers = {
+      'Authorization': `Bearer ${state.apiKey}`,
+      'HTTP-Referer': window.location.href,
+      'X-Title': 'AI Media Studio',
+      'Content-Type': 'application/json',
+    };
+
+    if (isVideo) {
+      // ── ASYNC VIDEO JOB (direct to OpenRouter /api/v1/videos) ───────────
+      document.getElementById('loadingText').textContent = 'Enviando solicitud...';
+      document.getElementById('loadingSubText').textContent = 'Iniciando generación de video...';
+
+      const videoPayload = { model: selectedModel, prompt: fullPrompt };
+
+      // Frame images: first_frame always, last_frame in start→end mode
+      const frames = [];
+      if (state.uploadedImageBase64) {
+        frames.push({ type: 'image_url', image_url: { url: state.uploadedImageBase64 }, frame_type: 'first_frame' });
+      }
+      if (state.videoMode === 'startend' && state.uploadedImageEndBase64) {
+        frames.push({ type: 'image_url', image_url: { url: state.uploadedImageEndBase64 }, frame_type: 'last_frame' });
+      }
+      if (frames.length) videoPayload.frame_images = frames;
+
+      // PRO controls — only sent when the user picks a non-default value
+      const dur = document.getElementById('videoDuration')?.value;
+      const asp = document.getElementById('videoAspect')?.value;
+      if (dur) videoPayload.duration = parseInt(dur, 10);
+      if (asp) videoPayload.aspect_ratio = asp;
+
+      console.log('[video] payload:', JSON.stringify({ ...videoPayload, frame_images: frames.map(f => ({ frame_type: f.frame_type, img: '...' })) }));
+
+      const submitResp = await fetch(`${OR_BASE}/videos`, {
+        method: 'POST', headers,
+        body: JSON.stringify(videoPayload),
+      });
+      const submitData = await submitResp.json();
+      if (!submitResp.ok) throw new Error(submitData.error?.message || `HTTP ${submitResp.status}`);
+
+      const jobId = submitData.id;
+      document.getElementById('loadingText').textContent = 'Generando video...';
+
+      // Poll until complete
+      const MAX_POLLS = 120, POLL_INTERVAL = 5000;
+      for (let attempt = 0; attempt < MAX_POLLS; attempt++) {
+        await sleep(POLL_INTERVAL);
+        const elapsed = (attempt + 1) * (POLL_INTERVAL / 1000);
+        const mins = Math.floor(elapsed / 60), secs = elapsed % 60;
+        const timeStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+        document.getElementById('loadingSubText').textContent =
+          elapsed < 20 ? 'Preparando generación...' : `Generando... ${timeStr} transcurridos`;
+
+        const pollResp = await fetch(`${OR_BASE}/videos/${jobId}`, { headers });
+        const pollData = await pollResp.json();
+        if (!pollResp.ok) throw new Error(pollData.error?.message || 'Error consultando estado');
+
+        if (pollData.status === 'failed') throw new Error(pollData.failure_reason || 'La generación del video falló');
+
+        // Accept different field names OpenRouter may use
+        const isComplete = pollData.status === 'completed' || pollData.status === 'succeeded';
+        const urlList = pollData.unsigned_urls || pollData.urls || (pollData.url ? [pollData.url] : null);
+        console.log('[video] poll status=', pollData.status, 'urlList=', urlList);
+
+        if (isComplete && urlList?.length > 0) {
+          const videoUrl = urlList[0];
+          document.getElementById('loadingSubText').textContent = 'Preparando video...';
+
+          // Try to get a playable local URL using these strategies in order:
+          // 1. Server proxy (localhost:3000) — best: fixes CORS + download
+          // 2. Blob fetch — works if CDN has Access-Control-Allow-Origin: *
+          // 3. Direct CDN URL — last resort (may not play from file://)
+          const displayUrl = await resolveVideoUrl(videoUrl);
+
+          state.currentResult = { url: displayUrl, originalUrl: videoUrl, type: 'video', prompt: fullPrompt, model: selectedModel };
+          addToGallery({ url: videoUrl, type: 'video', prompt: fullPrompt, model: selectedModel, id: Date.now().toString(), createdAt: new Date().toISOString() });
+          showResult(displayUrl, 'video');
+          showToast('¡Video generado con éxito! 🎬', 'success');
+          return; // exit generate() try block
+        }
+
+        if (pollData.progress != null) {
+          document.getElementById('loadingSubText').textContent = `Generando... ${pollData.progress}%`;
+        }
+      }
+
+      throw new Error('Tiempo de espera agotado. Comprueba la galería más tarde.');
+
+    } else {
+      // ── IMAGE GENERATION ─────────────────────────────────────────────────
+      let resultUrl = null;
+
+      const endpoint = (!state.refImages.length && useImagesEndpoint(selectedModel))
+        ? `${OR_BASE}/images/generations`
+        : `${OR_BASE}/chat/completions`;
+
+      if (endpoint.endsWith('/images/generations')) {
+        const payload = { model: selectedModel, prompt: fullPrompt, n: 1 };
+        if (negativePrompt) payload.negative_prompt = negativePrompt;
+        const resp = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(payload), signal: AbortSignal.timeout(90000) });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.error?.message || `HTTP ${resp.status}`);
+        resultUrl = data.data?.[0]?.url || (data.data?.[0]?.b64_json ? `data:image/png;base64,${data.data[0].b64_json}` : null);
+      } else {
+        const messageContent = state.refImages.length
+          ? [
+              ...state.refImages.map(img => ({ type: 'image_url', image_url: { url: img } })),
+              { type: 'text', text: fullPrompt },
+            ]
+          : fullPrompt;
+        const resp = await fetch(`${OR_BASE}/chat/completions`, {
+          method: 'POST', headers,
+          body: JSON.stringify({ model: selectedModel, messages: [{ role: 'user', content: messageContent }] }),
+          signal: AbortSignal.timeout(90000),
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.error?.message || `HTTP ${resp.status}`);
+        resultUrl = extractImageUrl(data);
+      }
+
+      if (!resultUrl) throw new Error('El modelo no devolvió una imagen. Prueba con otro modelo.');
+
+      state.currentResult = { url: resultUrl, type: state.activeType, prompt: fullPrompt, model: selectedModel };
+      addToGallery({ ...state.currentResult, id: Date.now().toString(), createdAt: new Date().toISOString() });
+      showResult(resultUrl, state.activeType);
+      showToast('¡Generado con éxito! ✦', 'success');
+    }
+
+  } catch (err) {
+    showToast(err.message || 'Error desconocido', 'error');
+    document.getElementById('resultPlaceholder').classList.remove('hidden');
+  } finally {
+    document.getElementById('loadingOverlay').classList.add('hidden');
+    state.generating = false;
+    document.getElementById('generateBtn').disabled = false;
+  }
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// Resolve a CDN video URL to a locally-playable blob URL.
+// Priority: 1) localhost proxy  2) blob with auth header  3) blob without auth  4) direct URL
+async function resolveVideoUrl(cdnUrl) {
+  // 1. Try localhost:3000 proxy (best option — server fetches with auth server-side)
+  try {
+    const proxyUrl = `http://localhost:3000/api/video/proxy?url=${encodeURIComponent(cdnUrl)}`;
+    const test = await fetch(proxyUrl, { signal: AbortSignal.timeout(4000) });
+    if (test.ok) {
+      console.log('[video] using localhost proxy ✓');
+      return proxyUrl;
+    }
+  } catch { /* server not running */ }
+
+  // 2. Fetch with Authorization header (OpenRouter CDN may require Bearer token)
+  if (state.apiKey) {
+    try {
+      const r = await fetch(cdnUrl, {
+        headers: { 'Authorization': `Bearer ${state.apiKey}` },
+        signal: AbortSignal.timeout(90000),
+      });
+      if (r.ok) {
+        const blob = await r.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        console.log('[video] using blob URL (with auth) ✓');
+        return blobUrl;
+      }
+      console.warn('[video] auth fetch status:', r.status);
+    } catch (e) { console.warn('[video] auth fetch failed:', e.message); }
+  }
+
+  // 3. Try without auth (works if CDN has open CORS)
+  try {
+    const r = await fetch(cdnUrl, { signal: AbortSignal.timeout(60000) });
+    if (r.ok) {
+      const blob = await r.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      console.log('[video] using blob URL (no auth) ✓');
+      return blobUrl;
+    }
+  } catch (e) { console.warn('[video] no-auth fetch failed:', e.message); }
+
+  // 4. Direct CDN URL as last resort
+  console.warn('[video] falling back to direct CDN URL');
+  return cdnUrl;
+}
+
+function showResult(url, type) {
+  const content = document.getElementById('resultContent');
+  const img = document.getElementById('resultImage');
+  const vid = document.getElementById('resultVideo');
+  content.classList.remove('hidden');
+  if (type === 'video') {
+    img.classList.add('hidden');
+    vid.classList.remove('hidden');
+    vid.onerror = () => {
+      // Both proxy and blob failed — show fallback open button
+      const originalUrl = state.currentResult?.originalUrl;
+      if (originalUrl) {
+        showToast('El reproductor no puede cargar el video. Pulsa "📺 Abrir" para verlo.', 'error');
+        document.getElementById('openVideoBtn').classList.remove('hidden');
+      }
+    };
+    vid.src = url;
+    vid.load();
+    vid.play().catch(() => {});
+    document.getElementById('openVideoBtn').classList.add('hidden');
+    document.getElementById('captionBtn').classList.add('hidden');
+    document.getElementById('formatsBtn').classList.add('hidden');
+    document.getElementById('scheduleBtn').classList.remove('hidden');
+    document.getElementById('captionPanel').classList.add('hidden');
+  } else {
+    vid.classList.add('hidden'); img.classList.remove('hidden'); img.src = url;
+    document.getElementById('openVideoBtn').classList.add('hidden');
+    document.getElementById('captionBtn').classList.remove('hidden');
+    document.getElementById('formatsBtn').classList.remove('hidden');
+    document.getElementById('scheduleBtn').classList.remove('hidden');
+  }
+}
+
+// ============================================================
+// IMAGE UPLOADS
+// ============================================================
+async function handleRefImageUpload(e) {
+  const files = Array.from(e.target.files);
+  if (!files.length) return;
+  const tooBig = files.filter(f => f.size > 10*1024*1024);
+  if (tooBig.length) showToast(`${tooBig.length} imagen(es) superan 10 MB y serán ignoradas`, 'warning');
+  const valid = files.filter(f => f.size <= 10*1024*1024);
+  if (!valid.length) return;
+  for (const file of valid) {
+    try {
+      const b64 = await normalizeImageOrientation(file);
+      addRefImage(b64);
+    } catch {
+      await new Promise(res => {
+        const r = new FileReader();
+        r.onload = ev => { addRefImage(ev.target.result); res(); };
+        r.readAsDataURL(file);
+      });
+    }
+  }
+  document.getElementById('imageFileInput').value = '';
+}
+
+function addRefImage(base64) {
+  state.refImages.push(base64);
+  renderRefImagesGrid();
+  if (state.refImages.length === 1) {
+    document.getElementById('editingHint').classList.remove('hidden');
+    if (state.activeType !== 'video') {
+      const editingModels = state.models.image.filter(m => m.editing);
+      if (editingModels.length > 0) populateModelSelect('image', editingModels);
+      document.getElementById('promptInput').placeholder = 'Describe los cambios o cómo combinar las referencias...';
+    }
+    showToast('Referencia añadida ✦', 'success');
+  } else {
+    showToast(`${state.refImages.length} referencias cargadas`, 'success');
+  }
+}
+
+function removeRefImage(idx) {
+  state.refImages.splice(idx, 1);
+  renderRefImagesGrid();
+  if (!state.refImages.length) {
+    document.getElementById('editingHint').classList.add('hidden');
+    document.getElementById('imgFileUpload').classList.remove('hidden');
+    document.getElementById('imgUploadLabel').textContent = 'Subir imágenes (múltiple)';
+    document.getElementById('promptInput').placeholder = "Describe lo que quieres crear...";
+    if (state.activeType !== 'video') populateModelSelect('image');
+  }
+}
+
+function renderRefImagesGrid() {
+  const grid   = document.getElementById('refImagesGrid');
+  const upload = document.getElementById('imgFileUpload');
+  if (!state.refImages.length) {
+    grid.classList.add('hidden');
+    upload.classList.remove('hidden');
+    return;
+  }
+  grid.classList.remove('hidden');
+  upload.classList.add('hidden');
+  grid.innerHTML = state.refImages.map((img, i) => `
+    <div class="ref-thumb-wrap">
+      <img src="${img}" alt="Ref ${i+1}">
+      <button class="ref-thumb-remove" onclick="removeRefImage(${i})" title="Quitar">✕</button>
+    </div>`).join('') +
+    `<label class="ref-add-btn" for="imageFileInput" title="Añadir más imagen">＋</label>`;
+}
+
+function clearRefImage() {
+  state.refImages = [];
+  state._refFromClientId = null;
+  document.getElementById('imageFileInput').value = '';
+  renderRefImagesGrid();
+  document.getElementById('imgFileUpload').classList.remove('hidden');
+  document.getElementById('imgUploadLabel').textContent = 'Subir imágenes (múltiple)';
+  document.getElementById('editingHint').classList.add('hidden');
+  document.getElementById('promptInput').placeholder = "Describe lo que quieres crear...";
+  // Only reset models if we are in image/avatar mode — never override video models
+  if (state.activeType !== 'video') populateModelSelect('image');
+}
+
+async function handleVideoImageUpload(e) {
+  const file = e.target.files[0]; if (!file) return;
+  try {
+    const b64 = await normalizeImageOrientation(file);
+    state.uploadedImageBase64 = b64;
+    document.getElementById('videoImageUpload').classList.add('hidden');
+    document.getElementById('videoPreviewBox').classList.remove('hidden');
+    document.getElementById('videoPreviewThumb').src = b64;
+    showToast('Imagen cargada como base para el video', 'success');
+  } catch {
+    showToast('Error al cargar la imagen', 'error');
+  }
+}
+
+function clearUploadedImage() {
+  state.uploadedImageBase64 = null;
+  document.getElementById('videoImageInput').value = '';
+  document.getElementById('videoImageUpload').classList.remove('hidden');
+  document.getElementById('videoPreviewBox').classList.add('hidden');
+}
+
+async function handleVideoEndImageUpload(e) {
+  const file = e.target.files[0]; if (!file) return;
+  try {
+    const b64 = await normalizeImageOrientation(file);
+    state.uploadedImageEndBase64 = b64;
+    document.getElementById('videoEndImageUpload').classList.add('hidden');
+    document.getElementById('videoEndPreviewBox').classList.remove('hidden');
+    document.getElementById('videoEndPreviewThumb').src = b64;
+    showToast('Imagen final cargada', 'success');
+  } catch {
+    showToast('Error al cargar la imagen', 'error');
+  }
+}
+
+function clearEndUploadedImage() {
+  state.uploadedImageEndBase64 = null;
+  document.getElementById('videoEndImageInput').value = '';
+  document.getElementById('videoEndImageUpload').classList.remove('hidden');
+  document.getElementById('videoEndPreviewBox').classList.add('hidden');
+}
+
+function switchVidMode(mode) {
+  state.videoMode = mode;
+  document.querySelectorAll('.vid-mode-btn').forEach(b => b.classList.toggle('active', b.dataset.vidmode === mode));
+  const isStartEnd = mode === 'startend';
+  document.getElementById('endFrameGroup').classList.toggle('hidden', !isStartEnd);
+  document.getElementById('startFrameLabel').innerHTML = isStartEnd
+    ? 'Imagen inicial'
+    : 'Imagen inicial <span class="label-optional">(opcional)</span>';
+}
+
+// ============================================================
+// API KEY
+// ============================================================
+async function saveApiKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  const info = document.getElementById('apiKeyInfo');
+  if (!key) { info.textContent = 'Introduce una API key'; info.className = 'api-key-info error'; return; }
+  if (!key.startsWith('sk-')) { info.textContent = 'La key debe empezar con "sk-"'; info.className = 'api-key-info error'; return; }
+  state.apiKey = key;
+  localStorage.setItem('openrouter_api_key', key);
+  info.textContent = '✓ Cargando modelos de OpenRouter...';
+  info.className = 'api-key-info success';
+  updateApiStatus();
+  await loadLiveModels();
+  const total = (state.models.image?.length||0) + (state.models.video?.length||0);
+  info.textContent = `✓ API key guardada · ${total} modelos cargados`;
+  info.className = 'api-key-info success';
+}
+
+function updateApiStatus() {
+  const dot = document.querySelector('.status-dot');
+  const text = document.querySelector('.status-text');
+  if (state.apiKey) { dot.classList.add('connected'); text.textContent = 'Conectado'; }
+  else { dot.classList.remove('connected'); text.textContent = 'Sin API Key'; }
+}
+
+// ============================================================
+// GALLERY RENDER
+// ============================================================
+function renderGallery() {
+  const filter = state.activeFilter;
+  const filtered = filter === 'all' ? state.gallery : state.gallery.filter(i => i.type === filter);
+  const grid = document.getElementById('galleryGrid');
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="gallery-empty"><div class="empty-icon">🖼️</div><p>No hay contenido guardado aún.</p><p>¡Genera algo para verlo aquí!</p></div>`;
+    return;
+  }
+  grid.innerHTML = filtered.map(item => {
+    const thumb = item.type === 'video'
+      ? `<video class="gallery-item-video" src="${escHtml(item.url)}" muted preload="metadata"></video>`
+      : `<img class="gallery-item-thumb" src="${escHtml(item.url)}" alt="" loading="lazy">`;
+    const typeLabel = { image:'🖼️', video:'🎬', avatar:'👤', edited:'✏️' }[item.type] || '✦';
+    return `<div class="gallery-item" data-id="${item.id}" draggable="true" ondragstart="event.dataTransfer.setData('text/plain','${item.id}')" onclick="openGalleryModal('${item.id}')">
+      ${thumb}
+      <span class="gallery-type-badge">${typeLabel}</span>
+      <div class="gallery-item-info">
+        <p class="gallery-item-prompt">${escHtml(item.prompt)}</p>
+        <p class="gallery-item-meta">${escHtml(shortModel(item.model))} · ${fmtDate(item.createdAt)}</p>
+      </div>
+      <div class="gallery-item-actions">
+        <button class="gallery-action-btn" title="Descargar" onclick="event.stopPropagation();downloadItem('${item.id}')">⬇</button>
+        <button class="gallery-action-btn" title="Eliminar" onclick="event.stopPropagation();deleteItem('${item.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterGallery(filter) {
+  state.activeFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === filter));
+  renderGallery();
+}
+
+function openGalleryModal(id) {
+  const item = state.gallery.find(i => i.id === id); if (!item) return;
+  state.currentModalItem = item;
+  const modalImg = document.getElementById('modalImage'), modalVid = document.getElementById('modalVideo');
+  if (item.type === 'video') { modalImg.classList.add('hidden'); modalVid.classList.remove('hidden'); modalVid.src = item.url; }
+  else { modalVid.classList.add('hidden'); modalImg.classList.remove('hidden'); modalImg.src = item.url; }
+  document.getElementById('modalPrompt').textContent = item.prompt;
+  document.getElementById('modalMeta').textContent = `${item.model} · ${fmtDate(item.createdAt)}`;
+  document.getElementById('imageModal').classList.remove('hidden');
+}
+
+function closeModal() {
+  document.getElementById('imageModal').classList.add('hidden');
+  document.getElementById('modalVideo').pause?.();
+  state.currentModalItem = null;
+}
+
+function deleteItem(id) {
+  if (!confirm('¿Eliminar este elemento de la galería?')) return;
+  state.gallery = state.gallery.filter(i => i.id !== id);
+  saveGalleryToStorage();
+  renderGallery();
+  showToast('Elemento eliminado', 'success');
+}
+
+function downloadItem(id) {
+  const item = state.gallery.find(i => i.id === id); if (!item) return;
+  const isVideo = item.type === 'video';
+  downloadUrl(item.url, `${item.type}_${id.slice(-6)}`, isVideo);
+}
+
+function downloadResult() {
+  if (!state.currentResult) return;
+  // Use the result's own type — never rely on activeType (it changes when user switches tabs)
+  const resultType = state.currentResult.type || state.activeType;
+  const isVideo = resultType === 'video';
+  downloadUrl(state.currentResult.url, `ai_${resultType}_${Date.now()}`, isVideo);
+}
+
+async function downloadUrl(url, name, isVideo = false) {
+  const ext = isVideo ? 'mp4' : 'jpg';
+
+  // blob://, data:, or /path — same-origin, a.download works perfectly
+  if (url.startsWith('blob:') || url.startsWith('data:') || url.startsWith('/')) {
+    triggerAnchorDownload(url, `${name}.${ext}`);
+    return;
+  }
+
+  // localhost proxy URL — same-origin, a.download works
+  if (url.startsWith('http://localhost')) {
+    const dlUrl = url.includes('?') ? `${url}&download=1` : `${url}?download=1`;
+    triggerAnchorDownload(dlUrl, `${name}.${ext}`);
+    return;
+  }
+
+  // External CDN URL — a.download is ignored by browsers for cross-origin URLs.
+  // Try to get a local URL first, then download.
+  if (isVideo) {
+    showToast('Preparando descarga...', 'success');
+    const localUrl = await resolveVideoUrl(url);
+    if (localUrl !== url) {
+      // Got a local blob or proxy URL — real download works
+      const dlUrl = localUrl.startsWith('http://localhost')
+        ? (localUrl.includes('?') ? `${localUrl}&download=1` : `${localUrl}?download=1`)
+        : localUrl;
+      triggerAnchorDownload(dlUrl, `${name}.${ext}`);
+      return;
+    }
+    // Still a CDN URL — open in new tab, can right-click save
+    window.open(url, '_blank');
+    showToast('Vídeo abierto en nueva pestaña → clic derecho → "Guardar vídeo como"', 'warning');
+    return;
+  }
+
+  // External image URL
+  triggerAnchorDownload(url, `${name}.${ext}`);
+}
+
+function triggerAnchorDownload(url, filename) {
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+function copyPrompt() {
+  const p = document.getElementById('promptInput').value;
+  navigator.clipboard.writeText(p).then(() => showToast('Prompt copiado', 'success')).catch(() => showToast('No se pudo copiar', 'error'));
+}
+
+function useCurrentAsVideoInput() {
+  if (!state.currentResult) return;
+  switchType('video');
+  state.uploadedImageBase64 = state.currentResult.url;
+  document.getElementById('videoImageUpload').classList.add('hidden');
+  document.getElementById('videoPreviewBox').classList.remove('hidden');
+  document.getElementById('videoPreviewThumb').src = state.currentResult.url;
+  showToast('Imagen añadida como base del video', 'success');
+}
+
+// ============================================================
+// NAV / TAB / TYPE
+// ============================================================
+function switchTab(tab) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('.tab-content').forEach(c => { c.classList.toggle('active', c.id === `tab-${tab}`); c.classList.toggle('hidden', c.id !== `tab-${tab}`); });
+  if (tab === 'gallery')  renderGallery();
+  if (tab === 'clients')  renderClientsGrid();
+  if (tab === 'calendar') renderCalendar();
+}
+
+function switchType(type) {
+  state.activeType = type;
+  document.querySelectorAll('.type-btn').forEach(b => b.classList.toggle('active', b.dataset.type === type));
+  const isVideo = type === 'video', isAvatar = type === 'avatar';
+  document.getElementById('imageSettings').classList.toggle('hidden', isVideo);
+  document.getElementById('videoSettings').classList.toggle('hidden', !isVideo);
+  document.getElementById('avatarSettings').classList.toggle('hidden', !isAvatar);
+  if (isVideo || isAvatar) clearRefImage();
+  document.getElementById('useAsInputBtn').classList.toggle('hidden', isVideo);
+  populateModelSelect(isVideo ? 'video' : 'image');
+  document.getElementById('loadingSubText').textContent = isVideo ? 'Los videos pueden tardar 1-3 minutos' : 'Esto puede tardar unos segundos';
+}
+
+// ============================================================
+// TOAST / UTILS
+// ============================================================
+function showToast(msg, type = 'info') {
+  document.querySelector('.toast')?.remove();
+  const t = document.createElement('div'); t.className = `toast ${type}`; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.transition='opacity .35s,transform .35s'; t.style.opacity='0'; t.style.transform='translateX(110%)'; setTimeout(()=>t.remove(),400); }, 3200);
+}
+
+function escHtml(str='') { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function shortModel(id='') { return id.split('/').pop().replace(/:free$/,''); }
+function fmtDate(iso) { return new Date(iso).toLocaleDateString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}); }
+
+// ============================================================
+// EVENT LISTENERS + INIT
+// ============================================================
+function setupEventListeners() {
+  document.querySelectorAll('.nav-tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
+  document.querySelectorAll('.type-btn').forEach(b => b.addEventListener('click', () => switchType(b.dataset.type)));
+  document.querySelectorAll('.ratio-btn').forEach(b => b.addEventListener('click', () => { document.querySelectorAll('.ratio-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); }));
+
+  const promptInput = document.getElementById('promptInput');
+  promptInput.addEventListener('input', () => document.getElementById('charCount').textContent = promptInput.value.length);
+  document.getElementById('clearPromptBtn').addEventListener('click', () => { promptInput.value=''; document.getElementById('negativePrompt').value=''; document.getElementById('charCount').textContent='0'; promptInput.focus(); });
+  document.getElementById('toggleNegative').addEventListener('click', () => {
+    const neg = document.getElementById('negativePrompt'), btn = document.getElementById('toggleNegative');
+    const isHidden = neg.classList.contains('hidden');
+    neg.classList.toggle('hidden', !isHidden);
+    btn.textContent = isHidden ? '－ Prompt negativo' : '＋ Prompt negativo';
+    if (isHidden) neg.focus();
+  });
+
+  document.getElementById('generateBtn').addEventListener('click', generate);
+  promptInput.addEventListener('keydown', e => { if (e.key==='Enter' && e.ctrlKey) generate(); });
+
+  document.getElementById('downloadBtn').addEventListener('click', downloadResult);
+  document.getElementById('openVideoBtn').addEventListener('click', async () => {
+    const originalUrl = state.currentResult?.originalUrl || state.currentResult?.url;
+    if (!originalUrl) return;
+    // If we already have a blob/proxy URL, use that for download instead of CDN
+    const currentUrl = state.currentResult?.url;
+    if (currentUrl && (currentUrl.startsWith('blob:') || currentUrl.startsWith('http://localhost'))) {
+      await downloadUrl(currentUrl, `video_${Date.now()}`, true);
+    } else {
+      // Try to resolve (with auth) before falling back to direct open
+      showToast('Intentando descargar...', 'success');
+      const resolved = await resolveVideoUrl(originalUrl);
+      if (resolved !== originalUrl) {
+        await downloadUrl(resolved, `video_${Date.now()}`, true);
+      } else {
+        window.open(originalUrl, '_blank');
+        showToast('URL abierta — si pide autenticación, inicia sesión en openrouter.ai en el mismo navegador', 'warning');
+      }
+    }
+  });
+  document.getElementById('captionBtn').addEventListener('click', openCaptionPanel);
+  document.getElementById('closeCaptionPanel').addEventListener('click', closeCaptionPanel);
+  document.getElementById('generateCaptionsBtn').addEventListener('click', generateCaptions);
+  document.querySelectorAll('.caption-tab').forEach(t=>t.addEventListener('click',()=>switchCaptionTab(t.dataset.platform)));
+  document.getElementById('formatsBtn').addEventListener('click', openFormatsModal);
+  document.getElementById('formatsModalClose').addEventListener('click', closeFormatsModal);
+  document.getElementById('formatsModalBackdrop').addEventListener('click', closeFormatsModal);
+  document.getElementById('scheduleBtn').addEventListener('click', openScheduleModal);
+  document.getElementById('scheduleConfirmBtn').addEventListener('click', confirmSchedule);
+  document.getElementById('scheduleCancelBtn').addEventListener('click', closeScheduleModal);
+  document.getElementById('scheduleModalBackdrop').addEventListener('click', closeScheduleModal);
+  document.getElementById('scheduleModalClose').addEventListener('click', closeScheduleModal);
+  document.getElementById('clientSelect').addEventListener('change', e=>selectClient(e.target.value));
+  document.getElementById('mockupTemplate').addEventListener('change', e=>applyMockupTemplate(e.target.value));
+  document.getElementById('motionTemplate').addEventListener('change', e=>applyMotionTemplate(e.target.value));
+  document.getElementById('newClientBtn').addEventListener('click', ()=>openClientModal());
+  document.getElementById('logoFileInput').addEventListener('change', e => handleLogoUpload(e.target.files[0]));
+  document.getElementById('clientSaveBtn').addEventListener('click', saveClient);
+  document.getElementById('clientCancelBtn').addEventListener('click', closeClientModal);
+  document.getElementById('clientModalBackdrop').addEventListener('click', closeClientModal);
+  document.getElementById('clientModalClose').addEventListener('click', closeClientModal);
+  document.getElementById('calPrevBtn').addEventListener('click', ()=>{ state.calViewDate.setMonth(state.calViewDate.getMonth()-1); renderCalendar(); });
+  document.getElementById('calNextBtn').addEventListener('click', ()=>{ state.calViewDate.setMonth(state.calViewDate.getMonth()+1); renderCalendar(); });
+  document.getElementById('exportCalCsvBtn').addEventListener('click', exportCalendarToCsv);
+  document.getElementById('copyPromptBtn').addEventListener('click', copyPrompt);
+  document.getElementById('useAsInputBtn').addEventListener('click', useCurrentAsVideoInput);
+
+  document.querySelectorAll('.filter-btn').forEach(b => b.addEventListener('click', () => filterGallery(b.dataset.filter)));
+
+  // Image optimizer
+  document.getElementById('saveImgSystemPromptBtn').addEventListener('click', saveImgOptimizerSettings);
+  document.getElementById('imgOptimizerEnabled').addEventListener('change', e => {
+    document.getElementById('imgOptimizerStatus').textContent = e.target.checked ? 'Activado' : 'Desactivado';
+  });
+  document.getElementById('uploadImgMdBtn').addEventListener('click', () => document.getElementById('imgMdFileInput').click());
+  document.getElementById('imgMdFileInput').addEventListener('change', e => {
+    const file = e.target.files[0]; if (!file) return;
+    const r = new FileReader();
+    r.onload = ev => { document.getElementById('imgSystemPromptInput').value = ev.target.result; showToast(`"${file.name}" cargado`, 'success'); };
+    r.readAsText(file); e.target.value = '';
+  });
+  // Video optimizer
+  document.getElementById('saveVidSystemPromptBtn').addEventListener('click', saveVidOptimizerSettings);
+  document.getElementById('vidOptimizerEnabled').addEventListener('change', e => {
+    document.getElementById('vidOptimizerStatus').textContent = e.target.checked ? 'Activado' : 'Desactivado';
+  });
+  document.getElementById('uploadVidMdBtn').addEventListener('click', () => document.getElementById('vidMdFileInput').click());
+  document.getElementById('vidMdFileInput').addEventListener('change', e => {
+    const file = e.target.files[0]; if (!file) return;
+    const r = new FileReader();
+    r.onload = ev => { document.getElementById('vidSystemPromptInput').value = ev.target.result; showToast(`"${file.name}" cargado`, 'success'); };
+    r.readAsText(file); e.target.value = '';
+  });
+
+  document.getElementById('saveApiKeyBtn').addEventListener('click', saveApiKey);
+  document.getElementById('apiKeyInput').addEventListener('keydown', e => { if (e.key==='Enter') saveApiKey(); });
+  document.getElementById('toggleApiKeyBtn').addEventListener('click', () => { const i=document.getElementById('apiKeyInput'); i.type=i.type==='password'?'text':'password'; });
+
+  // File inputs are triggered via <label for="..."> — no JS click handler needed
+  document.getElementById('imageFileInput').addEventListener('change', handleRefImageUpload);
+  // clearImgUpload removed — multi-image grid uses per-thumbnail remove buttons
+  document.getElementById('videoImageInput').addEventListener('change', handleVideoImageUpload);
+  document.getElementById('clearUpload').addEventListener('click', clearUploadedImage);
+  document.getElementById('videoEndImageInput').addEventListener('change', handleVideoEndImageUpload);
+  document.getElementById('clearEndUpload').addEventListener('click', clearEndUploadedImage);
+  document.querySelectorAll('.vid-mode-btn').forEach(b => b.addEventListener('click', () => switchVidMode(b.dataset.vidmode)));
+
+  document.getElementById('modalBackdrop').addEventListener('click', closeModal);
+  document.getElementById('modalClose').addEventListener('click', closeModal);
+  document.getElementById('modalDownloadBtn').addEventListener('click', () => { if (state.currentModalItem) downloadItem(state.currentModalItem.id); });
+  document.addEventListener('keydown', e => { if (e.key==='Escape') closeModal(); });
+}
+
+// ============================================================
+// LOGO + COLOR EXTRACTION
+// ============================================================
+async function extractDominantColors(imgSrc, numColors = 6) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const SIZE = 80;
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = SIZE;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, SIZE, SIZE);
+      const { data } = ctx.getImageData(0, 0, SIZE, SIZE);
+
+      // Quantize: bucket each channel into 32-step groups
+      const buckets = {};
+      for (let i = 0; i < data.length; i += 4) {
+        if (data[i+3] < 64) continue; // skip transparent/near-transparent
+        const r = Math.round(data[i]   / 24) * 24;
+        const g = Math.round(data[i+1] / 24) * 24;
+        const b = Math.round(data[i+2] / 24) * 24;
+        // Skip near-white and near-black (not useful brand colors)
+        const brightness = (r + g + b) / 3;
+        if (brightness > 235 || brightness < 20) continue;
+        const key = `${r},${g},${b}`;
+        buckets[key] = (buckets[key] || 0) + 1;
+      }
+
+      const colors = Object.entries(buckets)
+        .sort(([,a],[,b]) => b - a)
+        .slice(0, numColors)
+        .map(([key]) => {
+          const [r,g,b] = key.split(',').map(Number);
+          return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+        });
+      resolve(colors);
+    };
+    img.onerror = () => resolve([]);
+    img.src = imgSrc;
+  });
+}
+
+function renderColorSwatches(colors) {
+  const container = document.getElementById('colorSwatches');
+  const hint = document.getElementById('colorPaletteHint');
+  if (!colors.length) {
+    container.innerHTML = '<span class="color-swatch-label">No se detectaron colores</span>';
+    hint.textContent = '';
+    return;
+  }
+  container.innerHTML = colors.map(hex =>
+    `<div class="color-swatch" style="background:${hex}" title="${hex}" onclick="navigator.clipboard.writeText('${hex}').then(()=>showToast('Color copiado: ${hex}','success'))"></div>`
+  ).join('');
+  hint.textContent = `${colors.length} colores detectados · haz clic en un color para copiarlo`;
+}
+
+async function handleLogoUpload(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const base64 = e.target.result;
+    // Show preview
+    document.getElementById('logoPreviewPlaceholder').style.display = 'none';
+    const previewImg = document.getElementById('logoPreviewImg');
+    previewImg.src = base64;
+    previewImg.style.display = 'block';
+    // Store in hidden input
+    document.getElementById('clientLogoData').value = base64;
+    // Extract colors
+    document.getElementById('colorSwatches').innerHTML = '<span class="color-swatch-label">Analizando colores...</span>';
+    const colors = await extractDominantColors(base64);
+    document.getElementById('clientColorsData').value = JSON.stringify(colors);
+    renderColorSwatches(colors);
+    showToast('Logo cargado y paleta extraída ✦', 'success');
+  };
+  reader.readAsDataURL(file);
+}
+
+// ============================================================
+// CLIENTS
+// ============================================================
+function loadClientsFromStorage() { try { state.clients = JSON.parse(localStorage.getItem(CLIENTS_KEY)||'[]'); } catch { state.clients = []; } }
+function saveClientsToStorage()   { localStorage.setItem(CLIENTS_KEY, JSON.stringify(state.clients)); }
+
+function renderClientSelect() {
+  const sel = document.getElementById('clientSelect');
+  sel.innerHTML = '<option value="">Sin cliente</option>';
+  state.clients.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c.id; o.textContent = c.name;
+    if (c.id === state.activeClientId) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
+function selectClient(id) {
+  state.activeClientId = id;
+  const c = state.clients.find(x => x.id === id);
+  const info = document.getElementById('clientActiveInfo');
+  const useBtn = document.getElementById('useClientLogoBtn');
+  const clearBtn = document.getElementById('clearClientLogoBtn');
+  if (c) {
+    document.getElementById('clientTonePreview').textContent = `Tono: ${c.tone||'–'} · ${c.style||'–'}`;
+    const sidebarLogo = document.getElementById('clientSidebarLogo');
+    if (c.logo) {
+      sidebarLogo.src = c.logo;
+      sidebarLogo.style.display = 'block';
+      useBtn.classList.remove('hidden');   // always available while client has a logo
+    } else {
+      sidebarLogo.style.display = 'none';
+      useBtn.classList.add('hidden');
+    }
+    clearBtn.classList.add('hidden');
+    info.classList.remove('hidden');
+  } else {
+    info.classList.add('hidden');
+    useBtn.classList.add('hidden');
+    clearBtn.classList.add('hidden');
+  }
+}
+
+function useClientLogoAsRef() {
+  const c = state.clients.find(x => x.id === state.activeClientId);
+  if (!c?.logo) { showToast('Este cliente no tiene logo guardado','warning'); return; }
+
+  state._refFromClientId = state.activeClientId;
+
+  if (state.activeType === 'video') {
+    // Video mode → logo becomes the base frame. Replaces any previously uploaded photo.
+    state.uploadedImageBase64 = c.logo;
+    document.getElementById('videoImageUpload').classList.add('hidden');
+    const box = document.getElementById('videoPreviewBox');
+    box.classList.remove('hidden');
+    document.getElementById('videoPreviewThumb').src = c.logo;
+    showToast(`Logo de "${c.name}" cargado como imagen base del vídeo 🎬`, 'success');
+  } else {
+    // Image/avatar mode → add to reference images for editing
+    addRefImage(c.logo);
+    document.getElementById('editingHint').classList.remove('hidden');
+    const editingModels = state.models.image.filter(m => m.editing);
+    if (editingModels.length > 0) {
+      populateModelSelect('image', editingModels);
+      showToast(`Logo de "${c.name}" listo como referencia — describe los cambios en el prompt`, 'success');
+    } else {
+      showToast(`Logo cargado — usa un modelo de edición (GPT Image / Gemini) para usarlo`, 'warning');
+    }
+  }
+
+  // Keep "Usar logo" available (so it can re-apply over a new photo); show "Quitar" too
+  document.getElementById('clearClientLogoBtn').classList.remove('hidden');
+}
+
+function clearClientLogoRef() {
+  state._refFromClientId = null;
+  if (state.activeType === 'video') {
+    // Clear the video base frame
+    state.uploadedImageBase64 = null;
+    document.getElementById('videoImageInput').value = '';
+    document.getElementById('videoImageUpload').classList.remove('hidden');
+    document.getElementById('videoPreviewBox').classList.add('hidden');
+  } else {
+    clearRefImage();
+  }
+  document.getElementById('clearClientLogoBtn').classList.add('hidden');
+}
+
+function renderClientsGrid() {
+  const grid = document.getElementById('clientsGrid');
+  if (!state.clients.length) {
+    grid.innerHTML = `<div class="clients-empty"><div class="empty-icon">👤</div><p>No hay clientes configurados.</p><p>Crea tu primer perfil de marca.</p></div>`;
+    return;
+  }
+  grid.innerHTML = state.clients.map(c => `
+    <div class="client-card" onclick="openClientModal('${c.id}')">
+      ${c.logo ? `<img class="client-card-logo" src="${c.logo}" alt="logo">` : ''}
+      <div class="client-card-name">${escHtml(c.name)}</div>
+      <div class="client-card-tone">${escHtml(c.tone||'')}</div>
+      <div class="client-card-hashtags">${(c.hashtags||'').split(',').slice(0,4).map(h=>`#${h.trim()}`).filter(Boolean).join(' ')}</div>
+      ${c.colors?.length ? `<div class="client-card-colors">${c.colors.map(hex=>`<div class="client-card-color" style="background:${hex}" title="${hex}"></div>`).join('')}</div>` : ''}
+      <div class="client-card-actions">
+        <button class="gallery-action-btn" onclick="event.stopPropagation();openClientModal('${c.id}')">✏️</button>
+        <button class="gallery-action-btn" onclick="event.stopPropagation();deleteClient('${c.id}')">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+function openClientModal(id=null) {
+  const modal = document.getElementById('clientModal');
+  document.getElementById('clientModalTitle').textContent = id ? 'Editar cliente' : 'Nuevo cliente';
+  document.getElementById('clientEditId').value = id||'';
+  const c = id ? state.clients.find(x=>x.id===id) : null;
+  document.getElementById('clientName').value         = c?.name        || '';
+  document.getElementById('clientStyle').value        = c?.style       || '';
+  document.getElementById('clientTone').value         = c?.tone        || '';
+  document.getElementById('clientHashtags').value     = c?.hashtags    || '';
+  document.getElementById('clientRestrictions').value = c?.restrictions|| '';
+  // Logo + colors
+  document.getElementById('clientLogoData').value   = c?.logo   || '';
+  document.getElementById('clientColorsData').value = JSON.stringify(c?.colors || []);
+  document.getElementById('logoFileInput').value = '';
+  const previewImg = document.getElementById('logoPreviewImg');
+  const placeholder = document.getElementById('logoPreviewPlaceholder');
+  if (c?.logo) {
+    previewImg.src = c.logo; previewImg.style.display = 'block';
+    placeholder.style.display = 'none';
+  } else {
+    previewImg.style.display = 'none'; previewImg.src = '';
+    placeholder.style.display = '';
+  }
+  renderColorSwatches(c?.colors || []);
+  if (!c?.colors?.length) {
+    document.getElementById('colorSwatches').innerHTML = '<span class="color-swatch-label">Sube el logo para extraer la paleta</span>';
+    document.getElementById('colorPaletteHint').textContent = '';
+  }
+  modal.classList.remove('hidden');
+}
+function closeClientModal() { document.getElementById('clientModal').classList.add('hidden'); }
+
+function saveClient() {
+  const name = document.getElementById('clientName').value.trim();
+  if (!name) { showToast('El nombre del cliente es obligatorio','error'); return; }
+  const editId = document.getElementById('clientEditId').value;
+  let colors = [];
+  try { colors = JSON.parse(document.getElementById('clientColorsData').value||'[]'); } catch {}
+  const data = { id:editId||Date.now().toString(), name,
+    style:document.getElementById('clientStyle').value.trim(),
+    tone:document.getElementById('clientTone').value.trim(),
+    hashtags:document.getElementById('clientHashtags').value.trim(),
+    restrictions:document.getElementById('clientRestrictions').value.trim(),
+    logo: document.getElementById('clientLogoData').value || '',
+    colors };
+  if (editId) { const i=state.clients.findIndex(c=>c.id===editId); if(i!==-1) state.clients[i]=data; }
+  else state.clients.push(data);
+  saveClientsToStorage(); renderClientsGrid(); renderClientSelect();
+  closeClientModal(); showToast(`Cliente "${name}" guardado`,'success');
+}
+
+function deleteClient(id) {
+  if (!confirm('¿Eliminar este cliente?')) return;
+  state.clients = state.clients.filter(c=>c.id!==id);
+  if (state.activeClientId===id) { state.activeClientId=''; selectClient(''); }
+  saveClientsToStorage(); renderClientsGrid(); renderClientSelect();
+  showToast('Cliente eliminado','success');
+}
+
+// ============================================================
+// CAPTIONS
+// ============================================================
+function openCaptionPanel() {
+  document.getElementById('captionPanel').classList.remove('hidden');
+  document.getElementById('captionBtn').classList.add('hidden');
+  ['instagram','linkedin','twitter','tiktok'].forEach(p => {
+    const ta = document.getElementById(`caption-${p}`);
+    const limit = CAPTION_LIMITS[p];
+    ta.addEventListener('input', () => {
+      const n = ta.value.length;
+      document.getElementById(`cc-${p}`).textContent = n;
+      const counter = ta.closest('.caption-pane').querySelector('.caption-counter');
+      counter.classList.toggle('over-limit', n>limit);
+    });
+  });
+}
+function closeCaptionPanel() {
+  document.getElementById('captionPanel').classList.add('hidden');
+  document.getElementById('captionBtn').classList.remove('hidden');
+}
+function switchCaptionTab(platform) {
+  document.querySelectorAll('.caption-tab').forEach(t=>t.classList.toggle('active',t.dataset.platform===platform));
+  document.querySelectorAll('.caption-pane').forEach(p=>p.classList.toggle('hidden',p.dataset.platform!==platform));
+}
+function copyCaptionText(platform) {
+  const val = document.getElementById(`caption-${platform}`).value;
+  if (!val) { showToast('No hay caption para copiar','warning'); return; }
+  navigator.clipboard.writeText(val).then(()=>showToast('Caption copiado','success')).catch(()=>showToast('No se pudo copiar','error'));
+}
+async function generateCaptions() {
+  if (!state.apiKey) { showToast('Añade tu API key primero','warning'); return; }
+  const prompt = document.getElementById('promptInput').value.trim();
+  if (!prompt) { showToast('No hay prompt para generar captions','error'); return; }
+  const client = state.clients.find(c=>c.id===state.activeClientId);
+  const toneCtx = client ? ` Marca: "${client.name}". Tono: ${client.tone}.` : '';
+  document.getElementById('captionGenerating').classList.remove('hidden');
+  document.getElementById('generateCaptionsBtn').disabled = true;
+
+  const systemMsg = `Eres experto en redes sociales y copywriting.${toneCtx} Genera captions para cada plataforma. Responde SOLO con JSON válido con claves: instagram, linkedin, twitter, tiktok, hashtags_instagram, hashtags_linkedin, hashtags_twitter, hashtags_tiktok. Límites: Instagram 2200, LinkedIn 700, Twitter 280, TikTok 150 chars. hashtags = arrays de strings sin #.`;
+
+  let lastError = '';
+  for (const model of CAPTION_MODELS) {
+    try {
+      const resp = await fetch(`${OR_BASE}/chat/completions`, {
+        method:'POST',
+        headers:{ 'Authorization':`Bearer ${state.apiKey}`, 'Content-Type':'application/json', 'HTTP-Referer':window.location.href, 'X-Title':'AI Media Studio' },
+        body: JSON.stringify({
+          model,
+          messages:[
+            { role:'system', content: systemMsg },
+            { role:'user',   content:`Prompt del contenido: "${prompt}"` }
+          ],
+        }),
+        signal: AbortSignal.timeout(30000),
+      });
+      const data = await resp.json();
+      if (!resp.ok) { lastError = data.error?.message||`HTTP ${resp.status}`; continue; } // try next model
+
+      let raw = data.choices?.[0]?.message?.content||'{}';
+      raw = raw.replace(/^```json\s*/,'').replace(/\s*```$/,'');
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      const json = JSON.parse(jsonMatch?.[0]||raw);
+
+      ['instagram','linkedin','twitter','tiktok'].forEach(p=>{
+        if (json[p]) { const ta=document.getElementById(`caption-${p}`); ta.value=json[p]; ta.dispatchEvent(new Event('input')); }
+        const hArr = json[`hashtags_${p}`];
+        if (Array.isArray(hArr)&&hArr.length) document.getElementById(`hashtags-${p}`).textContent=hArr.map(h=>`#${h}`).join(' ');
+      });
+      showToast(`Captions generados con ${model.split('/').pop()} ✨`,'success');
+      document.getElementById('captionGenerating').classList.add('hidden');
+      document.getElementById('generateCaptionsBtn').disabled = false;
+      return; // success — exit
+    } catch(e) { lastError = e.message; }
+  }
+  // All models failed
+  showToast(`Error generando captions: ${lastError}`,'error');
+  document.getElementById('captionGenerating').classList.add('hidden');
+  document.getElementById('generateCaptionsBtn').disabled = false;
+}
+
+// ============================================================
+// FORMAT EXPORT (Canvas)
+// ============================================================
+function openFormatsModal() {
+  if (!state.currentResult?.url) return;
+  document.getElementById('formatsModal').classList.remove('hidden');
+  const grid = document.getElementById('formatsGrid');
+  grid.innerHTML = `<p style="grid-column:1/-1;color:var(--text-secondary);font-size:13px">Cargando previsualizaciones...</p>`;
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    grid.innerHTML = EXPORT_FORMATS.map(f=>`
+      <div class="format-card">
+        <canvas id="canvas-${f.id}"></canvas>
+        <div class="format-card-label">${f.label}<br><span style="font-weight:400;font-size:10px">${f.w}×${f.h}</span></div>
+        <button class="btn btn-secondary btn-sm" style="margin:6px 10px 10px" onclick="downloadFormat('${f.id}')">⬇ Descargar</button>
+      </div>`).join('');
+    EXPORT_FORMATS.forEach(f=>{
+      const c=document.getElementById(`canvas-${f.id}`);
+      const SCALE=1/3; c.width=Math.round(f.w*SCALE); c.height=Math.round(f.h*SCALE);
+      cropToCanvas(img,c,c.width,c.height);
+    });
+  };
+  img.onerror = () => { grid.innerHTML=`<p style="color:var(--error);grid-column:1/-1;padding:20px">No se pudo cargar la imagen (restricción CORS). Genera la imagen con un modelo cuya URL sea data: o blob:.</p>`; };
+  img.src = state.currentResult.url;
+}
+function closeFormatsModal() { document.getElementById('formatsModal').classList.add('hidden'); }
+
+function cropToCanvas(img, canvas, tw, th) {
+  const ctx=canvas.getContext('2d');
+  const ir=img.naturalWidth/img.naturalHeight, tr=tw/th;
+  let sx,sy,sw,sh;
+  if (ir>tr) { sh=img.naturalHeight; sw=sh*tr; sx=(img.naturalWidth-sw)/2; sy=0; }
+  else       { sw=img.naturalWidth;  sh=sw/tr; sx=0; sy=(img.naturalHeight-sh)/2; }
+  ctx.drawImage(img,sx,sy,sw,sh,0,0,tw,th);
+}
+
+function downloadFormat(formatId) {
+  if (!state.currentResult?.url) return;
+  const fmt = EXPORT_FORMATS.find(f=>f.id===formatId); if (!fmt) return;
+  const off = document.createElement('canvas'); off.width=fmt.w; off.height=fmt.h;
+  const img = new Image(); img.crossOrigin='anonymous';
+  img.onload  = () => { cropToCanvas(img,off,fmt.w,fmt.h); triggerAnchorDownload(off.toDataURL('image/jpeg',.92),`${fmt.id}_${fmt.w}x${fmt.h}.jpg`); };
+  img.onerror = () => showToast('No se pudo exportar: restricción CORS','error');
+  img.src = state.currentResult.url;
+}
+
+// ============================================================
+// CALENDAR
+// ============================================================
+function loadCalendarFromStorage() { try { state.calendar=JSON.parse(localStorage.getItem(CALENDAR_KEY)||'{}'); } catch { state.calendar={}; } }
+function saveCalendarToStorage()   { localStorage.setItem(CALENDAR_KEY,JSON.stringify(state.calendar)); }
+
+function renderCalendar() {
+  const d=state.calViewDate, y=d.getFullYear(), m=d.getMonth();
+  const names=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  document.getElementById('calMonthTitle').textContent=`${names[m]} ${y}`;
+  const firstDay=new Date(y,m,1), startOff=(firstDay.getDay()+6)%7;
+  const daysInMonth=new Date(y,m+1,0).getDate(), todayStr=new Date().toISOString().slice(0,10);
+  const prevDays=new Date(y,m,0).getDate();
+  let cells='';
+  for(let i=startOff-1;i>=0;i--) cells+=`<div class="cal-day other-month"><span class="cal-day-number">${prevDays-i}</span></div>`;
+  for(let day=1;day<=daysInMonth;day++) {
+    const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const isToday=ds===todayStr;
+    const items=(state.calendar[ds]||[]).map((it,idx)=>`
+      <div class="cal-item" title="${escHtml(it.caption||'')}">
+        <span class="platform-dot ${it.platform}"></span>
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis">${escHtml(it.clientName||it.platform)}</span>
+        <button class="cal-item-remove" onclick="event.stopPropagation();removeCalendarItem('${ds}',${idx})">✕</button>
+      </div>`).join('');
+    cells+=`<div class="cal-day${isToday?' today':''}" data-date="${ds}" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="calDrop(event,'${ds}')">
+      <span class="cal-day-number">${day}</span>${items}</div>`;
+  }
+  const rem=(startOff+daysInMonth)%7; if(rem) for(let i=1;i<=7-rem;i++) cells+=`<div class="cal-day other-month"><span class="cal-day-number">${i}</span></div>`;
+  document.getElementById('calendarGrid').innerHTML=cells;
+}
+
+function calDrop(e,dateStr) {
+  e.target.closest('.cal-day')?.classList.remove('drag-over');
+  const id=e.dataTransfer.getData('text/plain'); if (!id) return;
+  const item=state.gallery.find(i=>i.id===id); if (!item) return;
+  addToCalendarDate(dateStr,item,'instagram','');
+}
+
+function addToCalendarDate(dateStr,item,platform='instagram',caption='') {
+  if (!state.calendar[dateStr]) state.calendar[dateStr]=[];
+  const client=state.clients.find(c=>c.id===state.activeClientId);
+  state.calendar[dateStr].push({ id:item.id, imageUrl:item.url, caption:caption||item.prompt||'', platform, clientName:client?.name||'' });
+  saveCalendarToStorage(); renderCalendar();
+}
+
+function removeCalendarItem(dateStr,idx) {
+  if (!state.calendar[dateStr]) return;
+  state.calendar[dateStr].splice(idx,1);
+  if (!state.calendar[dateStr].length) delete state.calendar[dateStr];
+  saveCalendarToStorage(); renderCalendar();
+}
+
+function openScheduleModal() {
+  if (!state.currentResult) { showToast('Genera contenido primero','warning'); return; }
+  document.getElementById('scheduleDate').value=new Date().toISOString().slice(0,10);
+  document.getElementById('scheduleModal').classList.remove('hidden');
+}
+function closeScheduleModal() { document.getElementById('scheduleModal').classList.add('hidden'); }
+function confirmSchedule() {
+  const dateStr=document.getElementById('scheduleDate').value;
+  const platform=document.getElementById('schedulePlatform').value;
+  if (!dateStr) { showToast('Selecciona una fecha','error'); return; }
+  const item=state.gallery.find(i=>i.url===state.currentResult?.url)||{ id:Date.now().toString(), url:state.currentResult.url, type:state.currentResult.type, prompt:state.currentResult.prompt||'', model:state.currentResult.model||'', createdAt:new Date().toISOString() };
+  const caption=document.getElementById(`caption-${platform}`)?.value||'';
+  addToCalendarDate(dateStr,item,platform,caption);
+  closeScheduleModal();
+  showToast(`Programado para ${dateStr} en ${platform} ✓`,'success');
+}
+
+function exportCalendarToCsv() {
+  const rows=[['Fecha','Plataforma','Cliente','Caption','URL']];
+  Object.entries(state.calendar).sort(([a],[b])=>a.localeCompare(b)).forEach(([date,items])=>{
+    items.forEach(it=>rows.push([date,it.platform,it.clientName,(it.caption||'').replace(/"/g,'""'),it.imageUrl]));
+  });
+  const csv=rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'});
+  triggerAnchorDownload(URL.createObjectURL(blob),`calendario_${new Date().toISOString().slice(0,10)}.csv`);
+}
+
+// ============================================================
+// PROMPT OPTIMIZER
+// ============================================================
+function loadOptimizerSettings() {
+  // Image optimizer
+  const imgSp = localStorage.getItem(IMG_SYSTEM_PROMPT_KEY) || '';
+  const imgEn = localStorage.getItem(IMG_OPTIMIZER_KEY) === 'true';
+  const imgModel = localStorage.getItem(IMG_OPTIMIZER_MODEL) || 'google/gemini-2.0-flash-lite:free';
+  document.getElementById('imgSystemPromptInput').value = imgSp;
+  document.getElementById('imgOptimizerEnabled').checked = imgEn;
+  document.getElementById('imgOptimizerStatus').textContent = imgEn ? 'Activado' : 'Desactivado';
+  document.getElementById('imgOptimizerModel').value = imgModel;
+  // Video optimizer
+  const vidSp = localStorage.getItem(VID_SYSTEM_PROMPT_KEY) || '';
+  const vidEn = localStorage.getItem(VID_OPTIMIZER_KEY) === 'true';
+  const vidModel = localStorage.getItem(VID_OPTIMIZER_MODEL) || 'google/gemini-2.0-flash-lite:free';
+  document.getElementById('vidSystemPromptInput').value = vidSp;
+  document.getElementById('vidOptimizerEnabled').checked = vidEn;
+  document.getElementById('vidOptimizerStatus').textContent = vidEn ? 'Activado' : 'Desactivado';
+  document.getElementById('vidOptimizerModel').value = vidModel;
+}
+
+function saveImgOptimizerSettings() {
+  localStorage.setItem(IMG_SYSTEM_PROMPT_KEY, document.getElementById('imgSystemPromptInput').value.trim());
+  localStorage.setItem(IMG_OPTIMIZER_KEY, document.getElementById('imgOptimizerEnabled').checked);
+  localStorage.setItem(IMG_OPTIMIZER_MODEL, document.getElementById('imgOptimizerModel').value);
+  showToast('Optimizador de imágenes guardado ✦', 'success');
+}
+
+function saveVidOptimizerSettings() {
+  localStorage.setItem(VID_SYSTEM_PROMPT_KEY, document.getElementById('vidSystemPromptInput').value.trim());
+  localStorage.setItem(VID_OPTIMIZER_KEY, document.getElementById('vidOptimizerEnabled').checked);
+  localStorage.setItem(VID_OPTIMIZER_MODEL, document.getElementById('vidOptimizerModel').value);
+  showToast('Optimizador de vídeos guardado ✦', 'success');
+}
+
+async function optimizePrompt(userPrompt, type = 'image') {
+  const isVideo = type === 'video';
+  const enabledId  = isVideo ? 'vidOptimizerEnabled'  : 'imgOptimizerEnabled';
+  const promptId   = isVideo ? 'vidSystemPromptInput' : 'imgSystemPromptInput';
+  const modelId    = isVideo ? 'vidOptimizerModel'    : 'imgOptimizerModel';
+  const previewId  = isVideo ? 'lastVidOptimizedPrompt' : 'lastImgOptimizedPrompt';
+  const wrapId     = isVideo ? 'lastVidOptimizedWrap'   : 'lastImgOptimizedWrap';
+
+  if (!document.getElementById(enabledId)?.checked) return userPrompt;
+  const systemPrompt = document.getElementById(promptId).value.trim();
+  if (!systemPrompt) return userPrompt;
+  const model = document.getElementById(modelId).value;
+
+  try {
+    const resp = await fetch(`${OR_BASE}/chat/completions`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${state.apiKey}`, 'Content-Type': 'application/json', 'HTTP-Referer': window.location.href, 'X-Title': 'AI Media Studio' },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user',   content: userPrompt },
+        ],
+      }),
+      signal: AbortSignal.timeout(20000),
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error?.message || `HTTP ${resp.status}`);
+    const optimized = data.choices?.[0]?.message?.content?.trim();
+    if (!optimized) throw new Error('Respuesta vacía');
+    document.getElementById(previewId).textContent = optimized;
+    document.getElementById(wrapId).style.display = 'block';
+    return optimized;
+  } catch (e) {
+    console.warn('[optimizer] failed:', e.message);
+    showToast(`Optimizador falló — usando prompt original`, 'warning');
+    return userPrompt;
+  }
+}
+
+// ============================================================
+// MOCKUP / BRAND COMPOSITION
+// ============================================================
+const MOCKUP_TEMPLATES = {
+  billboard:    'Create a photorealistic billboard advertisement in a modern city at dusk, displaying THIS EXACT logo (do not redraw, alter or recreate it) prominently centered, with realistic lighting, reflections and perspective.',
+  tshirt:       'Place THIS EXACT logo (keep it identical, do not redraw it) printed on a folded cotton t-shirt, studio product photography, soft lighting, clean neutral background.',
+  mug:          'Place THIS EXACT logo (keep it identical) on a ceramic coffee mug, realistic product photo on a wooden table with soft morning light.',
+  storefront:   'Create a realistic storefront / shop facade with THIS EXACT logo (unchanged) as the illuminated sign above the entrance, street-level photography, golden hour lighting.',
+  businesscard: 'Design an elegant business card mockup featuring THIS EXACT logo (do not alter it), premium paper texture, top-down studio shot, minimal shadows.',
+  phone:        'Show THIS EXACT logo (keep it identical) displayed on a modern smartphone screen as an app splash screen, hand holding the phone, blurred background.',
+  totebag:      'Place THIS EXACT logo (unchanged) printed on a natural canvas tote bag, lifestyle product photography, neutral background.',
+  poster:       'Create a poster / wall print mockup with THIS EXACT logo (do not redraw it) as the central element, framed on a minimalist interior wall.',
+  brandbg:      'Create a clean branded background composition using the brand colors, with THIS EXACT logo (keep it identical) elegantly placed, suitable for a social media post.',
+};
+
+function applyMockupTemplate(id) {
+  const hint = document.getElementById('mockupHint');
+  if (!id) { hint.textContent = 'Selecciona una plantilla: usa el logo del cliente y prepara el prompt automáticamente.'; hint.classList.remove('active'); return; }
+
+  // Make sure we are in image mode
+  if (state.activeType !== 'image') switchType('image');
+
+  // Ensure the client logo is loaded as a reference image
+  const client = state.clients.find(c => c.id === state.activeClientId);
+  if (client?.logo) {
+    if (!state.refImages.includes(client.logo)) addRefImage(client.logo);
+  } else if (!state.refImages.length) {
+    hint.textContent = '⚠️ Selecciona un cliente con logo (o sube el logo como referencia) antes de usar la plantilla.';
+    hint.classList.add('active');
+    document.getElementById('mockupTemplate').value = '';
+    showToast('Necesitas un logo: selecciona un cliente con logo o súbelo manualmente', 'warning');
+    return;
+  }
+
+  // Force an editing-capable model
+  const editingModels = state.models.image.filter(m => m.editing);
+  if (editingModels.length > 0) populateModelSelect('image', editingModels);
+
+  // Fill the prompt with the template text
+  const promptInput = document.getElementById('promptInput');
+  promptInput.value = MOCKUP_TEMPLATES[id] || '';
+  document.getElementById('charCount').textContent = promptInput.value.length;
+
+  hint.textContent = '✓ Plantilla lista. Puedes editar el prompt y pulsar Generar.';
+  hint.classList.add('active');
+  showToast('Plantilla de composición lista 🎨', 'success');
+}
+
+// ============================================================
+// VIDEO MOTION TEMPLATES
+// ============================================================
+const MOTION_TEMPLATES = {
+  zoomin:     'Slow cinematic zoom-in towards the center, subtle camera push, smooth motion, depth of field, professional advertising look.',
+  zoomout:    'Slow cinematic zoom-out revealing the full scene, smooth steady camera pull-back, cinematic lighting.',
+  orbit:      'Smooth cinematic orbit, the camera slowly rotates around the subject, parallax depth, dramatic lighting, premium commercial style.',
+  pan:        'Gentle smooth lateral camera pan from left to right, steady motion, cinematic depth, soft light changes.',
+  logoreveal: 'The logo elegantly reveals itself with a soft light sweep and subtle glow, premium brand animation, smooth motion, sparkles of light.',
+  parallax:   'Subtle 3D parallax motion, foreground and background move at different depths, gentle camera drift, cinematic.',
+  dronetop:   'Aerial drone shot slowly descending from above, smooth cinematic top-down to eye-level movement, dynamic perspective.',
+  glitch:     'Modern digital glitch transition with light streaks and tech particles, futuristic brand animation, energetic but smooth.',
+  particles:  'Floating brand-colored light particles and lens flares drifting across the scene, soft glow, elegant premium motion.',
+  livescene:  'Bring the scene to life with subtle natural motion: moving lights, gentle wind, ambient activity, cinematic and realistic.',
+};
+
+function applyMotionTemplate(id) {
+  const hint = document.getElementById('motionHint');
+  if (!id) { hint.textContent = 'Selecciona el tipo de movimiento: prepara el prompt automáticamente.'; hint.classList.remove('active'); return; }
+  if (state.activeType !== 'video') switchType('video');
+
+  const promptInput = document.getElementById('promptInput');
+  // Keep any existing description the user wrote, append the motion instruction
+  const existing = promptInput.value.trim();
+  const motion = MOTION_TEMPLATES[id] || '';
+  promptInput.value = existing ? `${existing}. ${motion}` : motion;
+  document.getElementById('charCount').textContent = promptInput.value.length;
+
+  if (!state.uploadedImageBase64) {
+    hint.textContent = '⚠️ Sube una imagen base (o usa el logo del cliente) para animarla.';
+  } else {
+    hint.textContent = '✓ Movimiento listo. Pulsa Generar para crear el vídeo.';
+  }
+  hint.classList.add('active');
+  showToast('Plantilla de movimiento lista 🎥', 'success');
+}
+
+// ============================================================
+// INIT
+// ============================================================
+async function init() {
+  setupEventListeners();
+  updateApiStatus();
+  if (state.apiKey) document.getElementById('apiKeyInput').value = state.apiKey;
+  loadGalleryFromStorage();
+  loadClientsFromStorage(); renderClientSelect();
+  loadCalendarFromStorage();
+  loadOptimizerSettings();
+  await loadModels();
+}
+
+init();
+</script>
+</body>
+</html>

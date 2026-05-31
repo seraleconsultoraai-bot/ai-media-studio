@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Media Studio</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">
+        <span class="logo-icon">✦</span>
+        <span class="logo-text">AI Media Studio</span>
+      </div>
+    </div>
+    <nav class="nav-tabs">
+      <button class="nav-tab active" data-tab="generate">Generar</button>
+      <button class="nav-tab" data-tab="gallery">Galería</button>
+      <button class="nav-tab" data-tab="settings">Config</button>
+    </nav>
+    <div class="header-right">
+      <div class="api-status" id="apiStatus">
+        <span class="status-dot"></span>
+        <span class="status-text">Sin API Key</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <!-- ====== GENERATE TAB ====== -->
+    <section class="tab-content active" id="tab-generate">
+      <div class="workspace">
+
+        <!-- Left Sidebar -->
+        <aside class="settings-panel">
+
+          <div class="panel-section">
+            <h3 class="panel-title">Tipo</h3>
+            <div class="type-selector">
+              <button class="type-btn active" data-type="image">
+                <span class="type-icon">🖼️</span>
+                <span>Imagen</span>
+              </button>
+              <button class="type-btn" data-type="video">
+                <span class="type-icon">🎬</span>
+                <span>Video</span>
+              </button>
+              <button class="type-btn" data-type="avatar">
+                <span class="type-icon">👤</span>
+                <span>Avatar</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <h3 class="panel-title">Modelo</h3>
+            <select class="select" id="modelSelect"></select>
+          </div>
+
+          <!-- Image / Avatar settings -->
+          <div class="panel-section" id="imageSettings">
+            <h3 class="panel-title">Configuración</h3>
+
+            <!-- Reference image upload -->
+            <div class="form-group">
+              <label class="label">Imagen de referencia <span class="label-optional">(opcional)</span></label>
+              <div class="img-upload-area" id="imgUploadArea">
+                <div class="file-upload" id="imgFileUpload">
+                  <span class="upload-icon">🖼️</span>
+                  <span id="imgUploadLabel">Subir imagen a editar</span>
+                  <input type="file" accept="image/*" id="imageFileInput">
+                </div>
+                <div class="img-preview-box hidden" id="imgPreviewBox">
+                  <img class="img-preview-thumb" id="imgPreviewThumb" alt="Vista previa">
+                  <div class="img-preview-overlay">
+                    <button class="img-clear-btn" id="clearImgUpload" title="Quitar imagen">✕</button>
+                  </div>
+                </div>
+              </div>
+              <p class="editing-hint hidden" id="editingHint">
+                ✏️ Usa <strong>GPT Image</strong> o <strong>Gemini 2.0 Flash</strong> para editar imágenes
+              </p>
+            </div>
+
+            <div class="form-group">
+              <label class="label">Proporción</label>
+              <div class="ratio-grid">
+                <button class="ratio-btn active" data-ratio="1:1">1:1</button>
+                <button class="ratio-btn" data-ratio="16:9">16:9</button>
+                <button class="ratio-btn" data-ratio="9:16">9:16</button>
+                <button class="ratio-btn" data-ratio="4:3">4:3</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="label">Estilo artístico</label>
+              <select class="select" id="styleSelect">
+                <option value="">Sin especificar</option>
+                <option value="photorealistic, ultra detailed">Fotorealista</option>
+                <option value="digital art, vibrant colors">Arte digital</option>
+                <option value="oil painting, artistic">Pintura al óleo</option>
+                <option value="watercolor, soft">Acuarela</option>
+                <option value="3d render, octane render">Render 3D</option>
+                <option value="anime style">Anime</option>
+                <option value="cinematic, dramatic lighting">Cinematográfico</option>
+                <option value="minimalist, clean design">Minimalista</option>
+                <option value="sketch, pencil drawing">Boceto</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Video settings -->
+          <div class="panel-section hidden" id="videoSettings">
+            <h3 class="panel-title">Configuración de video</h3>
+            <div class="form-group">
+              <label class="label">Imagen base <span class="label-optional">(opcional)</span></label>
+              <div class="img-upload-area" id="videoUploadArea">
+                <div class="file-upload" id="videoImageUpload">
+                  <span class="upload-icon">🎬</span>
+                  <span id="uploadLabel">Subir imagen base</span>
+                  <input type="file" accept="image/*" id="videoImageInput">
+                </div>
+                <div class="img-preview-box hidden" id="videoPreviewBox">
+                  <img class="img-preview-thumb" id="videoPreviewThumb" alt="Vista previa">
+                  <div class="img-preview-overlay">
+                    <button class="img-clear-btn" id="clearUpload" title="Quitar imagen">✕</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Avatar settings -->
+          <div class="panel-section hidden" id="avatarSettings">
+            <h3 class="panel-title">Estilo de avatar</h3>
+            <div class="form-group">
+              <label class="label">Tipo</label>
+              <select class="select" id="avatarStyle">
+                <option value="professional headshot, studio lighting">Profesional</option>
+                <option value="cartoon avatar, cute style">Cartoon</option>
+                <option value="3D animated avatar">3D Animado</option>
+                <option value="pixel art avatar">Pixel Art</option>
+                <option value="realistic portrait, detailed">Retrato realista</option>
+                <option value="fantasy character portrait">Fantasía</option>
+                <option value="cyberpunk character">Cyberpunk</option>
+              </select>
+            </div>
+          </div>
+
+        </aside>
+
+        <!-- Main Generate Area -->
+        <div class="main-area">
+
+          <!-- Result Display -->
+          <div class="result-area" id="resultArea">
+            <div class="result-placeholder" id="resultPlaceholder">
+              <div class="placeholder-content">
+                <div class="placeholder-icon">✦</div>
+                <p>Tu contenido aparecerá aquí</p>
+                <p class="placeholder-sub">Escribe un prompt y pulsa Generar (Ctrl+Enter)</p>
+              </div>
+            </div>
+
+            <div class="result-content hidden" id="resultContent">
+              <img class="result-image hidden" id="resultImage" alt="Generated">
+              <video class="result-video hidden" id="resultVideo" controls playsinline></video>
+              <div class="result-actions" id="resultActions">
+                <button class="btn btn-secondary" id="downloadBtn">⬇ Descargar</button>
+                <button class="btn btn-secondary" id="copyPromptBtn">📋 Copiar prompt</button>
+                <button class="btn btn-secondary" id="useAsInputBtn" title="Usar como imagen base para video">🎬 Usar en video</button>
+              </div>
+            </div>
+
+            <div class="loading-overlay hidden" id="loadingOverlay">
+              <div class="loader">
+                <div class="loader-ring"></div>
+              </div>
+              <p class="loading-text" id="loadingText">Generando...</p>
+              <p class="loading-sub" id="loadingSubText">Esto puede tardar unos segundos</p>
+              <button class="btn btn-secondary btn-sm hidden" id="cancelBtn" style="margin-top:8px;opacity:0.8;">✕ Cancelar</button>
+            </div>
+          </div>
+
+          <!-- Prompt Area -->
+          <div class="prompt-area">
+            <div class="prompt-container">
+              <div class="prompt-input-wrapper">
+                <textarea
+                  class="prompt-input"
+                  id="promptInput"
+                  placeholder="Describe lo que quieres crear... (Ej: 'Un dragón dorado volando sobre una ciudad futurista al atardecer, estilo cinematográfico')"
+                  rows="3"
+                  spellcheck="false"
+                ></textarea>
+                <div class="prompt-tools">
+                  <button class="prompt-tool-btn" id="clearPromptBtn" title="Limpiar prompt">✕</button>
+                </div>
+              </div>
+
+              <div class="negative-prompt-wrapper">
+                <button class="toggle-btn" id="toggleNegative">＋ Prompt negativo</button>
+                <textarea
+                  class="prompt-input negative-prompt hidden"
+                  id="negativePrompt"
+                  placeholder="Qué NO quieres... (Ej: 'borroso, deformado, baja calidad, texto')"
+                  rows="2"
+                ></textarea>
+              </div>
+
+              <div class="prompt-footer">
+                <span class="char-count"><span id="charCount">0</span> caracteres</span>
+                <button class="btn btn-primary generate-btn" id="generateBtn">
+                  <span>⚡</span>
+                  <span>Generar</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== GALLERY TAB ====== -->
+    <section class="tab-content hidden" id="tab-gallery">
+      <div class="gallery-container">
+        <div class="gallery-header">
+          <h2 class="gallery-title">Galería</h2>
+          <div class="gallery-filters">
+            <button class="filter-btn active" data-filter="all">Todos</button>
+            <button class="filter-btn" data-filter="image">Imágenes</button>
+            <button class="filter-btn" data-filter="video">Videos</button>
+            <button class="filter-btn" data-filter="avatar">Avatares</button>
+          </div>
+        </div>
+        <div class="gallery-grid" id="galleryGrid">
+          <div class="gallery-empty" id="galleryEmpty">
+            <div class="empty-icon">🖼️</div>
+            <p>No hay contenido guardado aún.</p>
+            <p>¡Genera algo para verlo aquí!</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== SETTINGS TAB ====== -->
+    <section class="tab-content hidden" id="tab-settings">
+      <div class="settings-container">
+        <h2 class="settings-title">Configuración</h2>
+
+        <div class="settings-card">
+          <h3>🔑 API Key de OpenRouter</h3>
+          <p class="settings-desc">
+            Tu API key se guarda en el navegador y se envía directamente a OpenRouter.
+            Nunca se almacena en el servidor.
+          </p>
+          <div class="input-group">
+            <input
+              type="password"
+              class="input"
+              id="apiKeyInput"
+              placeholder="sk-or-v1-..."
+              autocomplete="off"
+            >
+            <button class="btn btn-primary" id="saveApiKeyBtn">Guardar</button>
+            <button class="btn btn-secondary" id="toggleApiKeyBtn">👁</button>
+          </div>
+          <p class="api-key-info" id="apiKeyInfo"></p>
+        </div>
+
+        <div class="settings-card">
+          <h3>📖 Cómo obtener tu API Key</h3>
+          <ol class="settings-steps">
+            <li>Ve a <strong>openrouter.ai</strong> y crea una cuenta gratuita</li>
+            <li>En el panel, ve a <strong>Keys</strong> y crea una nueva API key</li>
+            <li>Copia la key (empieza con <code>sk-or-v1-</code>)</li>
+            <li>Pégala arriba y pulsa Guardar</li>
+          </ol>
+          <p class="settings-note">
+            💡 Algunos modelos como <strong>FLUX Schnell</strong> son gratuitos y no requieren créditos.
+          </p>
+        </div>
+
+        <div class="settings-card">
+          <h3>ℹ️ Modelos disponibles</h3>
+          <div class="model-info-grid" id="modelInfoGrid">
+            <p class="settings-desc">Cargando modelos...</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Image Modal -->
+  <div class="modal hidden" id="imageModal">
+    <div class="modal-backdrop" id="modalBackdrop"></div>
+    <div class="modal-content">
+      <button class="modal-close" id="modalClose">✕</button>
+      <img class="modal-image hidden" id="modalImage" alt="">
+      <video class="modal-video hidden" id="modalVideo" controls></video>
+      <div class="modal-info">
+        <p class="modal-prompt" id="modalPrompt"></p>
+        <p class="modal-meta" id="modalMeta"></p>
+        <div class="modal-actions">
+          <button class="btn btn-secondary btn-sm" id="modalDownloadBtn">⬇ Descargar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js?v=6"></script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+# Dependencias
+node_modules/
+
+# Variables de entorno (API keys, secretos)
+.env
+.env.local
+*.local
+
+# Contenido generado en runtime (imágenes/vídeos)
+public/uploads/images/*
+public/uploads/videos/*
+!public/uploads/images/.gitkeep
+!public/uploads/videos/.gitkeep
+
+# Datos de runtime
+gallery.json
+
+# Sistema
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+
+# Editor / Claude
+.claude/
