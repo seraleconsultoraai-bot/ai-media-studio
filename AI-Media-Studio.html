@@ -35,7 +35,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 .credit-sep{color:var(--border);margin:0 1px}
 .credit-text{font-weight:600;color:var(--text-primary)}
 .credit-text.low{color:var(--error)}
-.main{margin-top:var(--header-height);height:calc(100vh - var(--header-height));overflow:hidden}
+.main{margin-top:var(--header-height);height:calc(100vh - var(--header-height));height:calc(100dvh - var(--header-height));overflow:hidden}
 .tab-content{height:100%}.tab-content.hidden{display:none}
 .workspace{display:flex;height:100%}
 .settings-panel{width:260px;min-width:260px;background:var(--bg-secondary);border-right:1px solid var(--border);overflow-y:auto;padding:16px 12px;display:flex;flex-direction:column;gap:8px}
@@ -181,7 +181,44 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 @keyframes toastIn{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
 .hidden{display:none!important}
 .modal-actions{display:flex;gap:6px}
-@media(max-width:700px){.settings-panel{display:none}.logo-text{display:none}.prompt-area{padding:10px 12px}.gallery-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}.model-info-grid{grid-template-columns:1fr}}
+/* ── Botón menú móvil + backdrop del drawer ── */
+.menu-toggle{display:none;background:var(--bg-surface);border:1px solid var(--border);color:var(--text-primary);width:38px;height:38px;border-radius:var(--radius-sm);cursor:pointer;font-size:18px;align-items:center;justify-content:center;flex-shrink:0}
+.sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:150}
+.sidebar-backdrop.open{display:block}
+@media(max-width:900px){
+  .editor-layout{grid-template-columns:1fr}
+  .formats-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+}
+@media(max-width:820px){
+  .header{padding:0 12px}
+  .menu-toggle{display:flex}
+  .header-left{display:flex;align-items:center;gap:10px}
+  .nav-tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;flex-wrap:nowrap;scrollbar-width:none}
+  .nav-tabs::-webkit-scrollbar{display:none}
+  .nav-tab{padding:6px 12px;font-size:12px;white-space:nowrap}
+  .logo-text{display:none}
+  .settings-panel{position:fixed;top:var(--header-height);left:0;bottom:0;width:280px;max-width:85vw;z-index:200;transform:translateX(-100%);transition:transform .25s ease;box-shadow:6px 0 30px rgba(0,0,0,.5)}
+  .settings-panel.open{transform:translateX(0)}
+  .prompt-area{padding:10px 12px}
+  .gallery-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+  .model-info-grid{grid-template-columns:1fr}
+  .clients-grid{grid-template-columns:1fr 1fr}
+  .editor-container,.clients-container,.settings-container,.calendar-container{padding:14px}
+  .calendar-month-title{font-size:15px;min-width:120px}
+  .cal-day{min-height:54px;padding:3px}
+  .result-image,.result-video{max-height:48vh}
+  .result-actions{gap:5px}
+  .result-actions .btn{padding:7px 10px;font-size:12px}
+}
+@media(max-width:480px){
+  .nav-tab{padding:6px 10px;font-size:11px}
+  .api-status{padding:4px 8px;font-size:11px}
+  .gallery-grid{grid-template-columns:1fr 1fr}
+  .clients-grid{grid-template-columns:1fr}
+  .calendar-weekdays{font-size:9px}
+  .cal-day-number{font-size:9px}
+  .header-right .status-text{display:none}
+}
 /* ── Editor ── */
 .editor-container{max-width:1100px;margin:0 auto;padding:20px 24px;height:100%;overflow-y:auto}
 .editor-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px}
@@ -322,6 +359,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 
 <header class="header">
   <div class="header-left">
+    <button class="menu-toggle" id="menuToggle" title="Opciones" aria-label="Menú">☰</button>
     <div class="logo">
       <span class="logo-icon">✦</span>
       <span class="logo-text">AI Media Studio</span>
@@ -353,7 +391,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
   <!-- GENERATE TAB -->
   <section class="tab-content active" id="tab-generate">
     <div class="workspace">
-      <aside class="settings-panel">
+      <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+      <aside class="settings-panel" id="settingsPanel">
 
         <div class="panel-section" id="clientSelectorSection">
           <h3 class="panel-title">Cliente</h3>
@@ -1873,6 +1912,7 @@ function switchTab(tab) {
   if (tab === 'clients')  renderClientsGrid();
   if (tab === 'calendar') renderCalendar();
   if (tab === 'editor')   { renderEditorClips(); renderEditorTexts(); }
+  window._closeSidebar?.();
 }
 
 function switchType(type) {
@@ -1906,6 +1946,19 @@ function fmtDate(iso) { return new Date(iso).toLocaleDateString('es-ES',{day:'nu
 // EVENT LISTENERS + INIT
 // ============================================================
 function setupEventListeners() {
+  // Drawer móvil (barra lateral deslizable)
+  const toggleSidebar = (open) => {
+    const p = document.getElementById('settingsPanel');
+    const b = document.getElementById('sidebarBackdrop');
+    if (!p) return;
+    const show = (open !== undefined) ? open : !p.classList.contains('open');
+    p.classList.toggle('open', show);
+    b.classList.toggle('open', show);
+  };
+  document.getElementById('menuToggle')?.addEventListener('click', () => toggleSidebar());
+  document.getElementById('sidebarBackdrop')?.addEventListener('click', () => toggleSidebar(false));
+  window._closeSidebar = () => toggleSidebar(false);
+
   document.querySelectorAll('.nav-tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
   document.querySelectorAll('.type-btn').forEach(b => b.addEventListener('click', () => switchType(b.dataset.type)));
   document.querySelectorAll('.ratio-btn').forEach(b => b.addEventListener('click', () => { document.querySelectorAll('.ratio-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); }));
