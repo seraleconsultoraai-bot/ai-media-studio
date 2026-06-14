@@ -248,6 +248,9 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 .editor-text-row{display:flex;gap:6px;align-items:center;margin-bottom:6px}
 .editor-text-row input[type=text]{flex:1;background:var(--bg-elevated);border:1px solid var(--border);color:var(--text-primary);border-radius:4px;padding:5px 8px;font-size:12px}
 .editor-text-row select{width:auto;font-size:11px}
+/* ── Opciones PRO carrusel ── */
+.car-opt{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-secondary);margin-bottom:6px;cursor:pointer}
+.car-opt input{accent-color:var(--accent);width:14px;height:14px}
 /* ── Video mode selector ── */
 .vid-mode-selector{display:flex;gap:4px}
 .vid-mode-btn{flex:1;background:var(--bg-surface);border:1px solid var(--border);color:var(--text-secondary);padding:8px 6px;border-radius:var(--radius-sm);cursor:pointer;font-size:11px;font-weight:500;transition:all .2s;font-family:inherit}
@@ -951,6 +954,19 @@ Slide 4: Llamada a la acción (CTA)"></textarea>
               <label class="label">Modelo</label>
               <select class="select" id="carModel"></select>
               <p class="mockup-hint" style="margin-top:5px">Usa un modelo de edición (Gemini / GPT Image) para que respete el estilo de las referencias.</p>
+            </div>
+            <div class="form-group">
+              <label class="label">⚡ Opciones PRO</label>
+              <label class="car-opt"><input type="checkbox" id="optBrandKit" checked> Brand Kit del cliente (logo + colores)</label>
+              <label class="car-opt"><input type="checkbox" id="optChain" checked> Coherencia encadenada (cada slide imita al anterior)</label>
+              <label class="car-opt"><input type="checkbox" id="optVision" checked> Analizar estilo de la referencia (IA visión)</label>
+              <label class="car-opt"><input type="checkbox" id="optLogo"> Poner logo del cliente en cada slide</label>
+              <select class="select" id="optLogoPos" style="width:auto;font-size:11px;margin-top:4px">
+                <option value="br">Logo: abajo dcha</option>
+                <option value="bl">Logo: abajo izq</option>
+                <option value="tr">Logo: arriba dcha</option>
+                <option value="tl">Logo: arriba izq</option>
+              </select>
             </div>
           </div>
           <div class="editor-panel hidden" id="carResultPanel">
@@ -3152,6 +3168,55 @@ function carRatio() {
   return document.querySelector('.ratio-btn[data-carratio].active')?.dataset.carratio || '1:1';
 }
 
+// Analiza el estilo de las imágenes de referencia con un modelo de visión
+async function analyzeStyle(refs) {
+  const models = ['google/gemini-2.0-flash-exp:free', 'openai/gpt-4o-mini', 'google/gemini-flash-1.5'];
+  const content = [
+    ...refs.map(img => ({ type: 'image_url', image_url: { url: img } })),
+    { type: 'text', text: 'Describe en detalle el estilo visual de esta(s) imagen(es) de carrusel para poder replicarlo: paleta de colores (hex aproximados), tipografía, composición y layout, márgenes/espaciado, iconografía y tono general. Responde en inglés en una sola descripción concisa, sin introducción ni listas.' },
+  ];
+  for (const model of models) {
+    try {
+      const r = await fetch(`${OR_BASE}/chat/completions`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${state.apiKey}`, 'Content-Type': 'application/json', 'HTTP-Referer': window.location.href, 'X-Title': 'AI Media Studio' },
+        body: JSON.stringify({ model, messages: [{ role: 'user', content }] }),
+        signal: AbortSignal.timeout(30000),
+      });
+      const d = await r.json();
+      if (!r.ok) continue;
+      const txt = d.choices?.[0]?.message?.content?.trim();
+      if (txt) return txt;
+    } catch { /* probar siguiente modelo */ }
+  }
+  return '';
+}
+
+function loadImg(src) {
+  return new Promise((res, rej) => { const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = () => res(i); i.onerror = rej; i.src = src; });
+}
+
+// Superpone el logo sobre una imagen (canvas). Devuelve dataURL o la original si falla (CORS)
+async function overlayLogo(imageUrl, logoUrl, position = 'br') {
+  try {
+    const [base, logo] = await Promise.all([loadImg(imageUrl), loadImg(logoUrl)]);
+    const c = document.createElement('canvas');
+    c.width = base.naturalWidth; c.height = base.naturalHeight;
+    const ctx = c.getContext('2d');
+    ctx.drawImage(base, 0, 0);
+    const lw = c.width * 0.18, lh = logo.naturalHeight * (lw / logo.naturalWidth), m = c.width * 0.04;
+    let x = c.width - lw - m, y = c.height - lh - m;
+    if (position === 'tl') { x = m; y = m; }
+    else if (position === 'tr') { x = c.width - lw - m; y = m; }
+    else if (position === 'bl') { x = m; y = c.height - lh - m; }
+    ctx.drawImage(logo, x, y, lw, lh);
+    return c.toDataURL('image/jpeg', 0.92);
+  } catch (e) {
+    console.warn('[carousel] overlay logo falló (CORS):', e?.message || e);
+    return imageUrl;
+  }
+}
+
 function renderCarRefs() {
   const grid = document.getElementById('carRefsGrid');
   const upload = document.getElementById('carRefUpload');
@@ -3187,19 +3252,55 @@ async function generateCarousel() {
   const theme = document.getElementById('carTheme').value.trim();
   const ratio = carRatio();
   const client = state.clients.find(c => c.id === state.activeClientId);
-  const brand = client ? ` Marca: ${client.name}.${client.colors?.length ? ' Colores: '+client.colors.slice(0,4).join(', ')+'.' : ''}` : '';
+
+  // Opciones PRO
+  const optBrandKit = document.getElementById('optBrandKit').checked;
+  const optChain    = document.getElementById('optChain').checked;
+  const optVision   = document.getElementById('optVision').checked;
+  const optLogo     = document.getElementById('optLogo').checked;
+  const logoPos     = document.getElementById('optLogoPos').value;
+
+  // Brand kit: colores + logo del cliente
+  const brand = (optBrandKit && client)
+    ? ` Marca: ${client.name}.${client.colors?.length ? ' Usa estos colores de marca: '+client.colors.slice(0,4).join(', ')+'.' : ''}`
+    : '';
 
   document.getElementById('carResultPanel').classList.remove('hidden');
   renderCarResults();
+
+  // 1) Análisis de estilo con visión IA (una sola vez)
+  let styleDesc = '';
+  if (optVision) {
+    btn.textContent = '🔍 Analizando estilo...';
+    styleDesc = await analyzeStyle(state.carousel.refs);
+    if (styleDesc) console.log('[carousel] estilo detectado:', styleDesc.slice(0, 200));
+  }
+  const styleCtx = styleDesc ? ` Replicate this exact style: ${styleDesc}` : '';
+
+  // Referencias base: las subidas + (brand kit) logo del cliente
+  const baseRefs = [...state.carousel.refs];
+  if (optBrandKit && client?.logo) baseRefs.push(client.logo);
+
+  let prevSlide = null; // para coherencia encadenada
 
   for (let i = 0; i < lines.length; i++) {
     btn.textContent = `⏳ Slide ${i+1}/${lines.length}...`;
     state.carousel.results.push({ status: 'loading', text: lines[i] });
     renderCarResults();
-    const prompt = `Create slide ${i+1} of ${lines.length} for a social media carousel. Keep the EXACT SAME visual style, colors, typography and layout as the reference image(s) so all slides look like one cohesive set. Aspect ratio ${ratio}. Slide content: "${lines[i]}".${theme ? ' Style: '+theme+'.' : ''}${brand}`;
+
+    // Coherencia encadenada: añade el slide anterior como referencia extra
+    const refs = (optChain && prevSlide) ? [...baseRefs, prevSlide] : baseRefs;
+
+    const prompt = `Create slide ${i+1} of ${lines.length} for a social media carousel. Keep the EXACT SAME visual style, colors, typography and layout as the reference image(s) so all slides look like one cohesive, professional set. Aspect ratio ${ratio}. Slide content: "${lines[i]}".${theme ? ' Extra style: '+theme+'.' : ''}${styleCtx}${brand}`;
+
     try {
-      const url = await genImage(prompt, state.carousel.refs, model);
+      let url = await genImage(prompt, refs, model);
       if (!url) throw new Error('sin imagen');
+      prevSlide = url; // referencia para el siguiente
+      // 2) Logo en cada slide (overlay canvas)
+      if (optLogo && client?.logo) {
+        url = await overlayLogo(url, client.logo, logoPos);
+      }
       state.carousel.results[i] = { status: 'done', url, text: lines[i] };
       addToGallery({ id: Date.now().toString()+i, type: 'image', prompt: `Carrusel: ${lines[i]}`, model, url, createdAt: new Date().toISOString() });
     } catch (e) {
