@@ -101,9 +101,11 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 .prompt-input::placeholder{color:var(--text-muted)}
 .negative-prompt{margin-top:6px;background:rgba(239,68,68,.04);border-color:rgba(239,68,68,.18)}
 .negative-prompt:focus{border-color:rgba(239,68,68,.5);box-shadow:0 0 0 3px rgba(239,68,68,.08)}
-.prompt-tools{position:absolute;right:10px;top:10px}
+.prompt-tools{position:absolute;right:10px;top:10px;display:flex;gap:2px}
 .prompt-tool-btn{background:none;border:none;color:var(--text-muted);cursor:pointer;padding:4px;border-radius:4px;font-size:13px;transition:color .2s;line-height:1}
 .prompt-tool-btn:hover{color:var(--text-secondary)}
+@keyframes mic-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.15)}}
+#micBtn.mic-active{color:var(--error)!important;animation:mic-pulse .9s ease-in-out infinite}
 .toggle-btn{background:none;border:none;color:var(--text-secondary);font-size:11px;cursor:pointer;font-family:inherit;transition:color .2s;padding:0}
 .toggle-btn:hover{color:var(--text-primary)}
 .prompt-footer{display:flex;align-items:center;justify-content:space-between}
@@ -336,6 +338,22 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 .format-card{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden;display:flex;flex-direction:column}
 .format-card-label{padding:6px 10px;font-size:11px;font-weight:600;color:var(--text-secondary);text-align:center;border-top:1px solid var(--border);line-height:1.4}
 .format-card canvas{width:100%;display:block;background:var(--bg-surface)}
+/* ── Sequence UI ── */
+.seq-shot{display:flex;gap:6px;align-items:flex-start;margin-bottom:8px}
+.seq-shot-num{font-size:10px;color:var(--text-muted);width:14px;flex-shrink:0;padding-top:9px;text-align:center;font-weight:700}
+.seq-shot textarea{flex:1;background:var(--bg-elevated);border:1px solid var(--border);color:var(--text-primary);padding:6px 8px;border-radius:var(--radius-sm);font-size:11px;font-family:inherit;resize:vertical;outline:none;transition:border-color .2s;min-height:52px}
+.seq-shot textarea:focus{border-color:var(--accent)}
+.seq-shot-del{background:none;border:1px solid transparent;color:var(--text-muted);cursor:pointer;padding:3px 5px;border-radius:4px;font-size:11px;flex-shrink:0;margin-top:4px;transition:all .2s;line-height:1}
+.seq-shot-del:hover{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3);color:var(--error)}
+.seq-result-area{width:100%;padding:20px;display:flex;flex-direction:column;align-items:center;gap:14px}
+.seq-results{display:flex;flex-direction:column;gap:10px;width:100%;max-width:680px}
+.seq-clip-row{display:flex;gap:10px;align-items:center;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px}
+.seq-clip-video{width:120px;height:68px;object-fit:cover;border-radius:4px;background:#000;flex-shrink:0;cursor:pointer}
+.seq-clip-placeholder{width:120px;height:68px;border-radius:4px;background:var(--bg-elevated);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px}
+.seq-clip-info{flex:1;min-width:0}
+.seq-clip-shot{font-size:12px;color:var(--text-primary);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.seq-clip-status{font-size:11px}
+.seq-clip-status.done{color:var(--success)}.seq-clip-status.error{color:var(--error)}.seq-clip-status.pending{color:var(--text-muted)}.seq-clip-status.generating{color:var(--accent)}
 /* ── Calendar ── */
 .calendar-container{height:100%;display:flex;flex-direction:column;padding:16px 24px;gap:12px;overflow:hidden}
 .calendar-header{display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap}
@@ -369,6 +387,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
     <button class="nav-tab active" data-tab="generate">Generar</button>
     <button class="nav-tab" data-tab="gallery">Galería</button>
     <button class="nav-tab" data-tab="clients">Clientes</button>
+    <button class="nav-tab" data-tab="carousel">Carruseles</button>
     <button class="nav-tab" data-tab="editor">Editor</button>
     <button class="nav-tab" data-tab="calendar">Calendario</button>
     <button class="nav-tab" data-tab="settings">Config</button>
@@ -413,10 +432,11 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 
         <div class="panel-section">
           <h3 class="panel-title">Tipo</h3>
-          <div class="type-selector">
+          <div class="type-selector" style="grid-template-columns:repeat(2,1fr)">
             <button class="type-btn active" data-type="image"><span class="type-icon">🖼️</span><span>Imagen</span></button>
             <button class="type-btn" data-type="video"><span class="type-icon">🎬</span><span>Video</span></button>
             <button class="type-btn" data-type="avatar"><span class="type-icon">👤</span><span>Avatar</span></button>
+            <button class="type-btn" data-type="sequence"><span class="type-icon">🎞️</span><span>Secuencia</span></button>
           </div>
         </div>
 
@@ -598,6 +618,14 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
           </div>
         </div>
 
+        <!-- Sequence settings -->
+        <div class="panel-section hidden" id="sequenceSettings">
+          <h3 class="panel-title">Tomas de la secuencia</h3>
+          <p style="font-size:11px;color:var(--text-muted);margin-bottom:10px;line-height:1.5">Cada toma se combina con el contexto base del prompt. El modelo y las opciones de arriba aplican a todas.</p>
+          <div id="seqShotsList"></div>
+          <button class="btn btn-secondary btn-sm" id="addSeqShotBtn" style="width:100%;margin-top:4px">＋ Añadir toma</button>
+        </div>
+
       </aside>
 
       <div class="main-area">
@@ -675,6 +703,12 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
               </div>
             </div>
           </div>
+          <!-- Sequence result area -->
+          <div class="seq-result-area hidden" id="seqResultArea">
+            <div class="seq-results" id="seqClipsList"></div>
+            <button class="btn btn-primary" id="seqAddToEditorBtn" style="display:none" onclick="addSeqToEditor()">📽️ Añadir todos al editor</button>
+          </div>
+
           <div class="loading-overlay hidden" id="loadingOverlay">
             <div class="loader"><div class="loader-ring"></div></div>
             <p class="loading-text" id="loadingText">Generando...</p>
@@ -689,6 +723,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
                 placeholder="Describe lo que quieres crear... (Ej: 'Un dragón dorado volando sobre una ciudad futurista al atardecer')"
                 rows="3" spellcheck="false"></textarea>
               <div class="prompt-tools">
+                <button class="prompt-tool-btn" id="micBtn" title="Dictar prompt (voz)">🎤</button>
                 <button class="prompt-tool-btn" id="clearPromptBtn" title="Limpiar">✕</button>
               </div>
             </div>
@@ -866,6 +901,67 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
         <div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div>
       </div>
       <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
+  </section>
+
+  <!-- CAROUSEL TAB -->
+  <section class="tab-content hidden" id="tab-carousel">
+    <div class="editor-container">
+      <div class="editor-header">
+        <h2 class="gallery-title">🎠 Generador de carruseles</h2>
+        <button class="btn btn-primary" id="genCarouselBtn">✨ Generar carrusel</button>
+      </div>
+      <div class="editor-layout">
+        <div class="editor-col">
+          <div class="editor-panel">
+            <div class="editor-panel-head"><h3>1. Fotos de referencia (estilo)</h3></div>
+            <p class="mockup-hint" style="margin-bottom:8px">Sube 1-3 imágenes con el estilo que quieres replicar (colores, tipografía, diseño). Los nuevos slides imitarán ese estilo.</p>
+            <div class="ref-images-grid" id="carRefsGrid"></div>
+            <label class="file-upload" id="carRefUpload" for="carRefInput">
+              <span class="upload-icon">🖼️</span>
+              <span>Subir imágenes de referencia</span>
+            </label>
+            <input type="file" accept="image/*" id="carRefInput" multiple style="display:none">
+          </div>
+          <div class="editor-panel">
+            <div class="editor-panel-head"><h3>2. Contenido de cada slide</h3></div>
+            <p class="mockup-hint" style="margin-bottom:8px">Escribe <strong>una línea por slide</strong>. Cada línea será un slide del carrusel.</p>
+            <textarea class="prompt-input" id="carSlides" style="resize:vertical;min-height:130px" placeholder="Slide 1: Título principal del carrusel
+Slide 2: Primer beneficio o consejo
+Slide 3: Segundo beneficio
+Slide 4: Llamada a la acción (CTA)"></textarea>
+          </div>
+        </div>
+        <div class="editor-col">
+          <div class="editor-panel">
+            <div class="editor-panel-head"><h3>3. Ajustes</h3></div>
+            <div class="form-group">
+              <label class="label">Instrucción general (opcional)</label>
+              <input type="text" class="input" id="carTheme" style="width:100%" placeholder="Ej: estilo minimalista, fondo claro, tono profesional">
+            </div>
+            <div class="form-group">
+              <label class="label">Formato</label>
+              <div class="ratio-grid">
+                <button class="ratio-btn active" data-carratio="1:1">1:1</button>
+                <button class="ratio-btn" data-carratio="4:5">4:5</button>
+                <button class="ratio-btn" data-carratio="9:16">9:16</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="label">Modelo</label>
+              <select class="select" id="carModel"></select>
+              <p class="mockup-hint" style="margin-top:5px">Usa un modelo de edición (Gemini / GPT Image) para que respete el estilo de las referencias.</p>
+            </div>
+          </div>
+          <div class="editor-panel hidden" id="carResultPanel">
+            <div class="editor-panel-head">
+              <h3>Resultado</h3>
+              <button class="btn btn-secondary btn-sm" id="carDownloadAllBtn">⬇ Descargar todo</button>
+            </div>
+            <div class="gallery-grid" id="carResults" style="grid-template-columns:repeat(auto-fill,minmax(120px,1fr))"></div>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -1133,6 +1229,9 @@ const state = {
   calendar: {},
   calViewDate: new Date(),
   editor: { clips: [], audio: null, texts: [], watermark: null },
+  sequence: { shots: ['', ''] },
+  seqResults: [],
+  carousel: { refs: [], results: [], generating: false },
 };
 const CLIENTS_KEY        = 'am_clients';
 const CALENDAR_KEY       = 'am_calendar';
@@ -1324,6 +1423,7 @@ function renderModelInfo() {
 // GENERATE
 // ============================================================
 async function generate() {
+  if (state.activeType === 'sequence') { generateSequence(); return; }
   const prompt = document.getElementById('promptInput').value.trim();
   if (!prompt) { showToast('Escribe un prompt para continuar', 'error'); return; }
   if (!state.apiKey) { showToast('Añade tu API key en Configuración primero', 'warning'); switchTab('settings'); return; }
@@ -1499,6 +1599,150 @@ async function generate() {
 }
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ============================================================
+// SEQUENCE — multi-clip generation with shared context
+// ============================================================
+function renderSeqShots() {
+  const container = document.getElementById('seqShotsList');
+  if (!container) return;
+  container.innerHTML = state.sequence.shots.map((shot, i) => `
+    <div class="seq-shot">
+      <span class="seq-shot-num">${i + 1}</span>
+      <textarea placeholder="Toma ${i + 1}: describe qué ocurre en este clip..." oninput="state.sequence.shots[${i}]=this.value">${escHtml(shot)}</textarea>
+      ${state.sequence.shots.length > 1 ? `<button class="seq-shot-del" onclick="removeSeqShot(${i})" title="Eliminar">✕</button>` : ''}
+    </div>`).join('');
+}
+
+function addSeqShot() {
+  state.sequence.shots.push('');
+  renderSeqShots();
+}
+
+function removeSeqShot(i) {
+  state.sequence.shots.splice(i, 1);
+  renderSeqShots();
+}
+
+async function generateSequence() {
+  const context = document.getElementById('promptInput').value.trim();
+  if (!context) { showToast('Escribe el contexto base en el prompt', 'error'); return; }
+  const shots = state.sequence.shots.map(s => s.trim()).filter(Boolean);
+  if (!shots.length) { showToast('Añade al menos una toma en el panel lateral', 'error'); return; }
+  if (!state.apiKey) { showToast('Añade tu API key en Configuración primero', 'warning'); switchTab('settings'); return; }
+  if (state.generating) return;
+
+  state.generating = true;
+  state.seqResults = shots.map((shot, i) => ({ index: i, shot, status: 'pending', url: null, originalUrl: null, error: null }));
+
+  document.getElementById('generateBtn').disabled = true;
+  document.getElementById('resultPlaceholder').classList.add('hidden');
+  document.getElementById('resultContent').classList.add('hidden');
+  document.getElementById('seqResultArea').classList.add('hidden');
+  document.getElementById('loadingOverlay').classList.remove('hidden');
+
+  const selectedModel = document.getElementById('modelSelect').value;
+  const headers = {
+    'Authorization': `Bearer ${state.apiKey}`,
+    'HTTP-Referer': window.location.href,
+    'X-Title': 'AI Media Studio',
+    'Content-Type': 'application/json',
+  };
+
+  for (let i = 0; i < shots.length; i++) {
+    state.seqResults[i].status = 'generating';
+    document.getElementById('loadingText').textContent = `Toma ${i + 1} de ${shots.length}`;
+    document.getElementById('loadingSubText').textContent = 'Enviando solicitud...';
+
+    try {
+      const fullPrompt = `${context}. ${shots[i]}`;
+      const submitResp = await fetch(`${OR_BASE}/videos`, {
+        method: 'POST', headers, body: JSON.stringify({ model: selectedModel, prompt: fullPrompt }),
+      });
+      const submitData = await submitResp.json();
+      if (!submitResp.ok) throw new Error(submitData.error?.message || `HTTP ${submitResp.status}`);
+
+      const jobId = submitData.id;
+      const MAX_POLLS = 120, POLL_INTERVAL = 5000;
+      let completed = false;
+      for (let attempt = 0; attempt < MAX_POLLS && !completed; attempt++) {
+        await sleep(POLL_INTERVAL);
+        const elapsed = (attempt + 1) * POLL_INTERVAL / 1000;
+        const mins = Math.floor(elapsed / 60), secs = elapsed % 60;
+        document.getElementById('loadingSubText').textContent =
+          `Toma ${i + 1}/${shots.length} — ${mins > 0 ? `${mins}m ${secs}s` : `${secs}s`} transcurridos`;
+
+        const pollResp = await fetch(`${OR_BASE}/videos/${jobId}`, { headers });
+        const pollData = await pollResp.json();
+        if (pollData.status === 'failed') throw new Error(pollData.failure_reason || 'Error en la generación');
+
+        const isComplete = pollData.status === 'completed' || pollData.status === 'succeeded';
+        const urlList = pollData.unsigned_urls || pollData.urls || (pollData.url ? [pollData.url] : null);
+        if (pollData.progress != null) document.getElementById('loadingSubText').textContent = `Toma ${i + 1}/${shots.length} — ${pollData.progress}%`;
+
+        if (isComplete && urlList?.length > 0) {
+          const videoUrl = urlList[0];
+          const displayUrl = await resolveVideoUrl(videoUrl);
+          state.seqResults[i].status = 'done';
+          state.seqResults[i].url = displayUrl;
+          state.seqResults[i].originalUrl = videoUrl;
+          addToGallery({ url: videoUrl, type: 'video', prompt: fullPrompt, model: selectedModel, id: Date.now().toString(), createdAt: new Date().toISOString() });
+          completed = true;
+        }
+      }
+      if (!completed) throw new Error('Tiempo de espera agotado');
+    } catch (err) {
+      state.seqResults[i].status = 'error';
+      state.seqResults[i].error = err.message;
+      showToast(`Error en toma ${i + 1}: ${err.message}`, 'error');
+    }
+  }
+
+  document.getElementById('loadingOverlay').classList.add('hidden');
+  state.generating = false;
+  document.getElementById('generateBtn').disabled = false;
+
+  const done = state.seqResults.filter(r => r.status === 'done').length;
+  showToast(`Secuencia completada: ${done}/${shots.length} tomas generadas`, done === shots.length ? 'success' : 'warning');
+  renderSeqResults();
+  loadCredits();
+}
+
+function renderSeqResults() {
+  const area = document.getElementById('seqResultArea');
+  if (!state.seqResults.length) { area.classList.add('hidden'); return; }
+  area.classList.remove('hidden');
+
+  document.getElementById('seqClipsList').innerHTML = state.seqResults.map((r, i) => {
+    if (r.status === 'done') {
+      return `<div class="seq-clip-row">
+        <video class="seq-clip-video" src="${escHtml(r.url)}" muted preload="metadata" onclick="this.paused?this.play():this.pause()" title="Clic para reproducir/pausar"></video>
+        <div class="seq-clip-info">
+          <div class="seq-clip-shot">Toma ${i + 1}: ${escHtml(r.shot.slice(0, 70))}${r.shot.length > 70 ? '…' : ''}</div>
+          <div class="seq-clip-status done">✓ Generado</div>
+        </div>
+      </div>`;
+    }
+    return `<div class="seq-clip-row">
+      <div class="seq-clip-placeholder">${r.status === 'error' ? '⚠️' : '⏳'}</div>
+      <div class="seq-clip-info">
+        <div class="seq-clip-shot">Toma ${i + 1}: ${escHtml(r.shot.slice(0, 70))}${r.shot.length > 70 ? '…' : ''}</div>
+        <div class="seq-clip-status ${r.status}">${r.status === 'error' ? '✗ ' + escHtml(r.error || 'Error') : 'Pendiente'}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const doneClips = state.seqResults.filter(r => r.status === 'done');
+  document.getElementById('seqAddToEditorBtn').style.display = doneClips.length ? '' : 'none';
+}
+
+function addSeqToEditor() {
+  const done = state.seqResults.filter(r => r.status === 'done');
+  if (!done.length) return;
+  done.forEach(r => addClip(r.url, `Toma ${r.index + 1}`));
+  switchTab('editor');
+  showToast(`${done.length} clips añadidos al editor ✦`, 'success');
+}
 
 // Resolve a CDN video URL to a locally-playable blob URL.
 // Priority: 1) localhost proxy  2) blob with auth header  3) blob without auth  4) direct URL
@@ -1912,20 +2156,28 @@ function switchTab(tab) {
   if (tab === 'clients')  renderClientsGrid();
   if (tab === 'calendar') renderCalendar();
   if (tab === 'editor')   { renderEditorClips(); renderEditorTexts(); }
+  if (tab === 'carousel') { renderCarRefs(); populateCarModel(); renderCarResults(); }
   window._closeSidebar?.();
 }
 
 function switchType(type) {
   state.activeType = type;
   document.querySelectorAll('.type-btn').forEach(b => b.classList.toggle('active', b.dataset.type === type));
-  const isVideo = type === 'video', isAvatar = type === 'avatar';
-  document.getElementById('imageSettings').classList.toggle('hidden', isVideo);
-  document.getElementById('videoSettings').classList.toggle('hidden', !isVideo);
+  const isVideo = type === 'video', isAvatar = type === 'avatar', isSeq = type === 'sequence';
+  document.getElementById('imageSettings').classList.toggle('hidden', isVideo || isSeq);
+  document.getElementById('videoSettings').classList.toggle('hidden', !isVideo || isSeq);
   document.getElementById('avatarSettings').classList.toggle('hidden', !isAvatar);
-  if (isVideo || isAvatar) clearRefImage();
-  document.getElementById('useAsInputBtn').classList.toggle('hidden', isVideo);
-  populateModelSelect(isVideo ? 'video' : 'image');
-  document.getElementById('loadingSubText').textContent = isVideo ? 'Los videos pueden tardar 1-3 minutos' : 'Esto puede tardar unos segundos';
+  document.getElementById('sequenceSettings').classList.toggle('hidden', !isSeq);
+  if (isVideo || isAvatar || isSeq) clearRefImage();
+  document.getElementById('useAsInputBtn').classList.toggle('hidden', isVideo || isSeq);
+  populateModelSelect(isVideo || isSeq ? 'video' : 'image');
+  document.getElementById('loadingSubText').textContent = isVideo || isSeq ? 'Los videos pueden tardar 1-3 minutos' : 'Esto puede tardar unos segundos';
+  if (isSeq) {
+    document.getElementById('promptInput').placeholder = 'Contexto base compartido: escena, personajes, estilo visual... (todas las tomas lo heredan)';
+    renderSeqShots();
+  } else {
+    document.getElementById('promptInput').placeholder = "Describe lo que quieres crear... (Ej: 'Un dragón dorado volando sobre una ciudad futurista al atardecer')";
+  }
 }
 
 // ============================================================
@@ -2023,6 +2275,7 @@ function setupEventListeners() {
   document.getElementById('exportCalCsvBtn').addEventListener('click', exportCalendarToCsv);
   document.getElementById('copyPromptBtn').addEventListener('click', copyPrompt);
   document.getElementById('useAsInputBtn').addEventListener('click', useCurrentAsVideoInput);
+  document.getElementById('addSeqShotBtn').addEventListener('click', addSeqShot);
 
   document.querySelectorAll('.filter-btn').forEach(b => b.addEventListener('click', () => filterGallery(b.dataset.filter)));
 
@@ -2861,10 +3114,211 @@ function setupEditorListeners() {
 }
 
 // ============================================================
+// GENERADOR DE CARRUSELES
+// ============================================================
+
+// Genera UNA imagen (reutilizable) — devuelve la URL/dataURL resultante
+async function genImage(prompt, refImages = [], model = null) {
+  const selectedModel = model || (state.models.image.find(m => m.editing)?.id) || state.models.image[0]?.id;
+  const headers = {
+    'Authorization': `Bearer ${state.apiKey}`,
+    'HTTP-Referer': window.location.href,
+    'X-Title': 'AI Media Studio',
+    'Content-Type': 'application/json',
+  };
+  if (!refImages.length && useImagesEndpoint(selectedModel)) {
+    const resp = await fetch(`${OR_BASE}/images/generations`, {
+      method: 'POST', headers, body: JSON.stringify({ model: selectedModel, prompt, n: 1 }),
+      signal: AbortSignal.timeout(120000),
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error?.message || `HTTP ${resp.status}`);
+    return data.data?.[0]?.url || (data.data?.[0]?.b64_json ? `data:image/png;base64,${data.data[0].b64_json}` : null);
+  }
+  const content = refImages.length
+    ? [ ...refImages.map(img => ({ type: 'image_url', image_url: { url: img } })), { type: 'text', text: prompt } ]
+    : prompt;
+  const resp = await fetch(`${OR_BASE}/chat/completions`, {
+    method: 'POST', headers,
+    body: JSON.stringify({ model: selectedModel, messages: [{ role: 'user', content }] }),
+    signal: AbortSignal.timeout(120000),
+  });
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(data.error?.message || `HTTP ${resp.status}`);
+  return extractImageUrl(data);
+}
+
+function carRatio() {
+  return document.querySelector('.ratio-btn[data-carratio].active')?.dataset.carratio || '1:1';
+}
+
+function renderCarRefs() {
+  const grid = document.getElementById('carRefsGrid');
+  const upload = document.getElementById('carRefUpload');
+  if (!state.carousel.refs.length) { grid.classList.add('hidden'); upload.classList.remove('hidden'); grid.innerHTML=''; return; }
+  grid.classList.remove('hidden');
+  grid.innerHTML = state.carousel.refs.map((img, i) => `
+    <div class="ref-thumb-wrap">
+      <img src="${img}" alt="Ref ${i+1}">
+      <button class="ref-thumb-remove" onclick="removeCarRef(${i})" title="Quitar">✕</button>
+    </div>`).join('') + `<label class="ref-add-btn" for="carRefInput" title="Añadir">＋</label>`;
+}
+function removeCarRef(i) { state.carousel.refs.splice(i, 1); renderCarRefs(); }
+
+function populateCarModel() {
+  const sel = document.getElementById('carModel');
+  const editing = state.models.image.filter(m => m.editing);
+  const list = editing.length ? editing : state.models.image;
+  sel.innerHTML = list.map(m => `<option value="${m.id}">${escHtml(m.name)}${m.free?' (Gratis)':''}${m.editing?' ✏️':''}</option>`).join('');
+}
+
+async function generateCarousel() {
+  if (state.carousel.generating) return;
+  if (!state.apiKey) { showToast('Añade tu API key en Config', 'warning'); return; }
+  const lines = document.getElementById('carSlides').value.split('\n').map(l => l.trim()).filter(Boolean);
+  if (!lines.length) { showToast('Escribe al menos una línea (un slide)', 'error'); return; }
+  if (!state.carousel.refs.length) { showToast('Sube al menos una foto de referencia', 'warning'); return; }
+
+  state.carousel.generating = true;
+  state.carousel.results = [];
+  const btn = document.getElementById('genCarouselBtn');
+  btn.disabled = true;
+  const model = document.getElementById('carModel').value;
+  const theme = document.getElementById('carTheme').value.trim();
+  const ratio = carRatio();
+  const client = state.clients.find(c => c.id === state.activeClientId);
+  const brand = client ? ` Marca: ${client.name}.${client.colors?.length ? ' Colores: '+client.colors.slice(0,4).join(', ')+'.' : ''}` : '';
+
+  document.getElementById('carResultPanel').classList.remove('hidden');
+  renderCarResults();
+
+  for (let i = 0; i < lines.length; i++) {
+    btn.textContent = `⏳ Slide ${i+1}/${lines.length}...`;
+    state.carousel.results.push({ status: 'loading', text: lines[i] });
+    renderCarResults();
+    const prompt = `Create slide ${i+1} of ${lines.length} for a social media carousel. Keep the EXACT SAME visual style, colors, typography and layout as the reference image(s) so all slides look like one cohesive set. Aspect ratio ${ratio}. Slide content: "${lines[i]}".${theme ? ' Style: '+theme+'.' : ''}${brand}`;
+    try {
+      const url = await genImage(prompt, state.carousel.refs, model);
+      if (!url) throw new Error('sin imagen');
+      state.carousel.results[i] = { status: 'done', url, text: lines[i] };
+      addToGallery({ id: Date.now().toString()+i, type: 'image', prompt: `Carrusel: ${lines[i]}`, model, url, createdAt: new Date().toISOString() });
+    } catch (e) {
+      state.carousel.results[i] = { status: 'error', text: lines[i], error: e.message };
+    }
+    renderCarResults();
+    loadCredits();
+  }
+
+  btn.disabled = false; btn.textContent = '✨ Generar carrusel';
+  state.carousel.generating = false;
+  const ok = state.carousel.results.filter(r => r.status === 'done').length;
+  showToast(`Carrusel listo: ${ok}/${lines.length} slides ✨`, ok ? 'success' : 'error');
+}
+
+function renderCarResults() {
+  const grid = document.getElementById('carResults');
+  grid.innerHTML = state.carousel.results.map((r, i) => {
+    if (r.status === 'loading') return `<div class="gallery-item" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:var(--bg-elevated)"><div class="loader-ring" style="width:24px;height:24px;border-width:3px"></div></div>`;
+    if (r.status === 'error')   return `<div class="gallery-item" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:var(--bg-elevated);color:var(--error);font-size:11px;padding:8px;text-align:center">⚠️ Slide ${i+1}<br>falló</div>`;
+    return `<div class="gallery-item">
+      <img class="gallery-item-thumb" src="${r.url}" alt="Slide ${i+1}">
+      <span class="gallery-type-badge">${i+1}</span>
+      <div class="gallery-item-actions">
+        <button class="gallery-action-btn" title="Descargar" onclick="downloadUrl('${r.url}','slide_${i+1}',false)">⬇</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function downloadAllCarousel() {
+  const done = state.carousel.results.filter(r => r.status === 'done');
+  if (!done.length) { showToast('No hay slides para descargar', 'warning'); return; }
+  done.forEach((r, i) => setTimeout(() => downloadUrl(r.url, `slide_${i+1}`, false), i * 400));
+  showToast(`Descargando ${done.length} slides...`, 'success');
+}
+
+function setupCarouselListeners() {
+  document.getElementById('carRefInput').addEventListener('change', async e => {
+    const files = Array.from(e.target.files);
+    for (const f of files) {
+      if (f.size > 10*1024*1024) { showToast(`${f.name} supera 10MB`, 'warning'); continue; }
+      try { state.carousel.refs.push(await normalizeImageOrientation(f)); }
+      catch { await new Promise(res => { const r=new FileReader(); r.onload=ev=>{state.carousel.refs.push(ev.target.result);res();}; r.readAsDataURL(f); }); }
+    }
+    renderCarRefs(); e.target.value = '';
+  });
+  document.querySelectorAll('.ratio-btn[data-carratio]').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('.ratio-btn[data-carratio]').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+  }));
+  document.getElementById('genCarouselBtn').addEventListener('click', generateCarousel);
+  document.getElementById('carDownloadAllBtn').addEventListener('click', downloadAllCarousel);
+}
+
+// ============================================================
 // INIT
 // ============================================================
+// ============================================================
+// SPEECH RECOGNITION (dictado por voz)
+// ============================================================
+let _recognition = null;
+let _micActive = false;
+let _micBaseText = '';
+
+function setupSpeechRecognition() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const btn = document.getElementById('micBtn');
+  if (!SR) { btn.style.display = 'none'; return; }
+
+  _recognition = new SR();
+  _recognition.lang = 'es-ES';
+  _recognition.continuous = false;
+  _recognition.interimResults = true;
+
+  _recognition.onstart = () => {
+    _micActive = true;
+    _micBaseText = document.getElementById('promptInput').value;
+    btn.classList.add('mic-active');
+    btn.title = 'Escuchando… (clic para parar)';
+  };
+
+  _recognition.onresult = (e) => {
+    let interimTranscript = '', finalTranscript = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) finalTranscript += t;
+      else interimTranscript += t;
+    }
+    const input = document.getElementById('promptInput');
+    const sep = _micBaseText ? ' ' : '';
+    input.value = _micBaseText + sep + (finalTranscript || interimTranscript).trim();
+    document.getElementById('charCount').textContent = input.value.length;
+    if (finalTranscript) _micBaseText = input.value;
+  };
+
+  _recognition.onerror = (e) => {
+    if (e.error === 'not-allowed') showToast('Permiso de micrófono denegado', 'error');
+    else if (e.error !== 'no-speech') showToast('Error de voz: ' + e.error, 'error');
+    _stopMic();
+  };
+
+  _recognition.onend = _stopMic;
+
+  btn.addEventListener('click', () => {
+    if (_micActive) { _recognition.stop(); _stopMic(); }
+    else { try { _recognition.start(); } catch(e) { showToast('No se pudo iniciar el micrófono', 'error'); } }
+  });
+}
+
+function _stopMic() {
+  _micActive = false;
+  const btn = document.getElementById('micBtn');
+  if (btn) { btn.classList.remove('mic-active'); btn.title = 'Dictar prompt (voz)'; }
+}
+
 async function init() {
   setupEventListeners();
+  setupSpeechRecognition();
   updateApiStatus();
   if (state.apiKey) { document.getElementById('apiKeyInput').value = state.apiKey; loadCredits(); }
   document.getElementById('creditStatus').addEventListener('click', loadCredits);
@@ -2873,6 +3327,7 @@ async function init() {
   loadCalendarFromStorage();
   loadOptimizerSettings();
   setupEditorListeners();
+  setupCarouselListeners();
   await loadModels();
 }
 
